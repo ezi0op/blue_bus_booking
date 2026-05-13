@@ -132,7 +132,7 @@ const ChatBot = () => {
           className={`bg-white shadow-[0_20px_60px_rgba(0,0,0,0.15)] border border-gray-100 transition-all duration-500 ease-out flex flex-col ${
             isMinimized 
               ? 'w-72 h-14 rounded-2xl' 
-              : 'w-[400px] h-[600px] rounded-[2.5rem]'
+              : 'w-[calc(100vw-2.5rem)] sm:w-[400px] h-[600px] rounded-[2.5rem]'
           }`}
         >
           {/* Header */}
@@ -195,7 +195,7 @@ const ChatBot = () => {
                         {msg.role === 'user' ? <User size={14} /> : <Sparkles size={14} />}
                       </div>
                       <div className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                        <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed font-medium shadow-sm transition-all duration-300 hover:shadow-md ${
+                        <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed font-medium shadow-sm transition-all duration-300 hover:shadow-md whitespace-pre-wrap ${
                           msg.role === 'user' 
                             ? 'bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-tr-none' 
                             : msg.isError 

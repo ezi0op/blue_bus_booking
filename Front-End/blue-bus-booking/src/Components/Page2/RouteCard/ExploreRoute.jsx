@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { X, MapPin, Clock, Navigation, Zap, Loader2 } from 'lucide-react';
+import { X, MapPin, Clock, Navigation, Zap, Loader2, Calendar } from 'lucide-react';
 import StopMap from '../StopMap/StopMap';
 
 const ExploreRoute = ({ route, isOpen, onClose }) => {
@@ -72,7 +72,7 @@ const ExploreRoute = ({ route, isOpen, onClose }) => {
               </div>
 
               {/* Quick Info Grid */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
                   <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Total Distance</span>
                   <span className="text-lg font-black text-gray-800">{route.distance} KM</span>
@@ -80,6 +80,10 @@ const ExploreRoute = ({ route, isOpen, onClose }) => {
                 <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
                   <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Duration</span>
                   <span className="text-lg font-black text-gray-800">{route.duration} HRS</span>
+                </div>
+                <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                  <span className="text-[10px] font-black text-blue-600 uppercase block mb-1">Next Trip</span>
+                  <span className="text-lg font-black text-blue-700">{route.nextDate || 'Daily'}</span>
                 </div>
                 <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
                   <span className="text-[10px] font-black text-gray-400 uppercase block mb-1">Status</span>

@@ -12,4 +12,6 @@ public interface SeatService {
 	Seat getSeatById(Long id);
 
 	Seat deactivateSeat(Long id);
+
+	List<Seat> getAllSeats();
 }

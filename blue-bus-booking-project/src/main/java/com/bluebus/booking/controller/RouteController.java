@@ -25,7 +25,7 @@ public class RouteController {
 
 	@GetMapping
 	public ApiResponse<List<RouteDTO>> getAllRoutes(@RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "id") String sortBy,
+			@RequestParam(defaultValue = "100") int size, @RequestParam(defaultValue = "id") String sortBy,
 			@RequestParam(defaultValue = "asc") String direction) {
 
 		Page<Route> routePage = routeService.getAllRoutes(page, size, sortBy, direction);
@@ -62,13 +62,13 @@ public class RouteController {
 		}
 
 		return new ApiResponse<>(true, "Routes found", response);
-	}
+	}	
 
 	// 🔁 MAPPER
 	private RouteDTO mapToDTO(Route route) {
 		return RouteDTO.builder().id(route.getId()).source(route.getSource()).destination(route.getDestination())
 				.distance(route.getDistance()).image(route.getImage()).duration(route.getDuration())
-				.isActive(route.getIsActive()).build();
+				.isActive(route.getIsActive()).nextDate(routeService.getNextTripDate(route.getId())).build();
 	}
 
 }

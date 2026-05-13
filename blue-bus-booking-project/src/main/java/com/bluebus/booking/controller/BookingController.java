@@ -66,7 +66,7 @@ public class BookingController {
 	@PutMapping("/{id}/cancel")
 	public ApiResponse<BookingResponseDTO> cancel(@PathVariable Long id) {
 
-		Booking booking = bookingService.cancelBooking(id);
+		Booking booking = bookingService.cancelBooking(id, false);
 
 		return new ApiResponse<>(true, "Booking cancelled", mapToDTO(booking));
 	}

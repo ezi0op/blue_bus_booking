@@ -20,4 +20,6 @@ public interface RouteService {
 	Route deactivateRoute(Long id);
 
 	List<Route> getActiveRoutes();
+	
+	java.time.LocalDate getNextTripDate(Long routeId);
 }

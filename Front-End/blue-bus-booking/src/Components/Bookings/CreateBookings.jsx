@@ -79,7 +79,6 @@ const CreateBookings = ({ tripId, price, selectedSeats, onBack, onRemoveSeat }) 
     }    const incompletePassenger = passengerData.find(p => !p.name || !p.age || !p.gender || !p.seatId);
     if (incompletePassenger) {
       setError(`Please fill all details for Seat ${incompletePassenger.seatNumber}`);
-      console.error('Incomplete Passenger Data:', incompletePassenger);
       setLoading(false);
       return;
     }
@@ -99,8 +98,6 @@ const CreateBookings = ({ tripId, price, selectedSeats, onBack, onRemoveSeat }) 
       }))
     };
 
-    console.log('Final Booking Request Payload:', bookingRequest);
-
     try {
       const response = await axios.post('http://localhost:8080/api/bookings', bookingRequest, {
         headers: { Authorization: `Bearer ${token}` }
@@ -119,7 +116,6 @@ const CreateBookings = ({ tripId, price, selectedSeats, onBack, onRemoveSeat }) 
             });
             navigate(`/payment-success/${bookingId}`);
           } catch (err) {
-            console.error('Offline Payment Error:', err);
             setError('Failed to confirm offline payment.');
             setLoading(false);
           }
@@ -145,12 +141,7 @@ const CreateBookings = ({ tripId, price, selectedSeats, onBack, onRemoveSeat }) 
         setError(response.data.message || 'Failed to create booking.');
         setLoading(false);
       }
-    } catch (err) {
-      console.error('Booking Error Details:', err.response?.data);
-      const detailedError = err.response?.data?.errors 
-        ? err.response.data.errors.map(e => e.defaultMessage).join(', ') 
-        : err.response?.data?.message;
-      setError(detailedError || 'Error occurred while creating booking.');
+        setError(detailedError || 'Error occurred while creating booking.');
     } finally {
       setLoading(false);
     }

@@ -19,6 +19,8 @@ import com.bluebus.booking.security.filter.JwtFilter;
 
 import java.util.Arrays;
 
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+
 /**
  * Security Configuration for Blue Bus Booking Application
  * 
@@ -34,6 +36,7 @@ import java.util.Arrays;
  * @version 1.0
  */
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
 	@Autowired
@@ -49,6 +52,7 @@ public class SecurityConfig {
 						.requestMatchers("/api/ai/**").permitAll()
 						.requestMatchers("/api/recommendations/**").permitAll()
 						.requestMatchers("/api/smart-search/**").permitAll()
+						.requestMatchers("/api/seat-preference/**").permitAll()
 						.requestMatchers("/api/auth/**").permitAll()
 						.requestMatchers("/api/trips/**").permitAll()
 						.requestMatchers("/api/buses/**").permitAll()
@@ -67,12 +71,11 @@ public class SecurityConfig {
 						.requestMatchers("/api/seats/**").authenticated()
 						.requestMatchers("/api/seat-availability/**").authenticated()
 
-						// 🤖 AI & Smart features - authenticated only
-						.requestMatchers("/api/seat-preference/**").authenticated()
 						.requestMatchers("/api/booking-items/**").authenticated()
 						.requestMatchers("/api/payments/**").authenticated()
 						.requestMatchers("/api/invoices/**").authenticated()
 						.requestMatchers("/api/tickets/**").authenticated()
+						.requestMatchers(org.springframework.http.HttpMethod.GET, "/api/coupons").permitAll()
 						.requestMatchers("/api/coupons/**").authenticated()
 
 						// 🚫 Everything else requires authentication

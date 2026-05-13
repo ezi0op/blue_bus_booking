@@ -149,7 +149,12 @@ public class PaymentServiceImpl implements PaymentService {
 		paymentRepository.save(payment);
 		bookingRepository.save(booking);
 		// Send success email
-		emailService.sendPaymentSuccess(booking, payment);
+		emailService.sendPaymentSuccess(
+				booking.getContactEmail(), 
+				booking.getBookingReference(), 
+				payment.getRazorpayPaymentId(), 
+				payment.getAmount()
+		);
 
 	}
 
@@ -170,7 +175,7 @@ public class PaymentServiceImpl implements PaymentService {
 		bookingRepository.save(booking);
 
 		// Send failure email
-		emailService.sendPaymentFailed(booking);
+		emailService.sendPaymentFailed(booking.getContactEmail(), booking.getBookingReference());
 	}
 
 	// get payment by booking id
@@ -190,13 +195,11 @@ public class PaymentServiceImpl implements PaymentService {
 	}
 
 	@Override
-	@Transactional
-	public PaymentResponseDTO processRefund(Long bookingId, String reason) {
+	@Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+	public PaymentResponseDTO processRefund(Long bookingId, String reason, boolean isFullRefund) {
 		Payment payment = paymentRepository
 				.findTopByBookingIdAndStatusOrderByCreatedAtDesc(bookingId, PaymentStatus.SUCCESS)
 				.orElseThrow(() -> new RuntimeException("Payment not found for boking:" + bookingId));
-
-//		 refund allowed only for successful payments
 
 		if (payment.getStatus() != PaymentStatus.SUCCESS) {
 			throw new RuntimeException("Refund not applicable for payment status: " + payment.getStatus());
@@ -204,13 +207,19 @@ public class PaymentServiceImpl implements PaymentService {
 
 		Booking booking = payment.getBooking();
 
-		// calculate refund based on cancellation timing
-		BigDecimal refundAmount = cancellationPolicyService.calculateRefundAmount(bookingId);
+		// calculate refund: Use full amount if requested, else use policy
+		BigDecimal refundAmount = isFullRefund 
+				? payment.getAmount() 
+				: cancellationPolicyService.calculateRefundAmount(bookingId);
 
 		String razorpayRefundId = null;
 
 		if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
 			razorpayRefundId = initiateRazorpayRefund(payment.getRazorpayPaymentId(), refundAmount);
+		}
+
+		if ("ALREADY_REFUNDED".equals(razorpayRefundId)) {
+			razorpayRefundId = payment.getRazorpayRefundId(); // Keep existing ID if any
 		}
 
 		payment.setRazorpayRefundId(razorpayRefundId);
@@ -239,8 +248,19 @@ public class PaymentServiceImpl implements PaymentService {
 		paymentRepository.save(payment);
 		bookingRepository.save(booking);
 		// Send emails
-		emailService.sendRefundConfirmation(booking, payment);
-		emailService.sendBookingCancellation(booking);
+		emailService.sendRefundConfirmation(
+				booking.getContactEmail(), 
+				booking.getBookingReference(), 
+				payment.getRefundedAmount(), 
+				payment.getRefundReason()
+		);
+		emailService.sendBookingCancellation(
+				booking.getContactEmail(), 
+				booking.getBookingReference(), 
+				booking.getTrip().getRoute().getSource(), 
+				booking.getTrip().getRoute().getDestination(), 
+				booking.getTrip().getJourneyDate().toString()
+		);
 
 		log.info("Refund processed successfully for booking {}", bookingId);
 
@@ -266,8 +286,16 @@ public class PaymentServiceImpl implements PaymentService {
 			return refundId;
 
 		} catch (Exception e) {
-			log.error("Razorpay refund failed: {}", e.getMessage());
-			throw new RuntimeException("Refund failed: " + e.getMessage());
+			String errorMsg = e.getMessage();
+			log.error("Razorpay refund failed: {}", errorMsg);
+			
+			// If already refunded, don't throw exception to avoid rolling back transaction
+			if (errorMsg != null && errorMsg.contains("fully refunded already")) {
+				log.warn("Payment {} already fully refunded. Skipping.", razorpayPaymentId);
+				return "ALREADY_REFUNDED";
+			}
+			
+			throw new RuntimeException("Refund failed: " + errorMsg);
 		}
 	}
 
@@ -331,7 +359,12 @@ public class PaymentServiceImpl implements PaymentService {
 		bookingRepository.save(booking);
 
 		// Send success email
-		emailService.sendPaymentSuccess(booking, payment);
+		emailService.sendPaymentSuccess(
+				booking.getContactEmail(), 
+				booking.getBookingReference(), 
+				payment.getRazorpayOrderId(), 
+				payment.getAmount()
+		);
 	}
 
 }

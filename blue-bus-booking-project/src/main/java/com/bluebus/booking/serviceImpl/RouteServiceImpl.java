@@ -20,6 +20,9 @@ public class RouteServiceImpl implements RouteService {
 	@Autowired
 	private RouteRepository routeRepository;
 
+	@Autowired
+	private com.bluebus.booking.repository.TripRepository tripRepository;
+
 	@Override
 	public Route createRoute(Route route) {
 
@@ -70,13 +73,10 @@ public class RouteServiceImpl implements RouteService {
 	public Route deactivateRoute(Long id) {
 		Route route = getRouteById(id);
 
-		if (!route.getIsActive()) {
-			throw new RuntimeException("Route already inactive");
-		}
+		// Toggle status instead of just deactivating
+		route.setIsActive(!route.getIsActive());
 
-		route.setIsActive(false);
-
-		return routeRepository.save(route);
+		return routeRepository.save(route);	
 	}
 
 	@Override
@@ -92,6 +92,11 @@ public class RouteServiceImpl implements RouteService {
 		Pageable pageable = PageRequest.of(page, size, sort);
 
 		return routeRepository.findAll(pageable);
+	}
+
+	@Override
+	public java.time.LocalDate getNextTripDate(Long routeId) {
+		return tripRepository.findNextTripDate(routeId, java.time.LocalDate.now());
 	}
 
 }

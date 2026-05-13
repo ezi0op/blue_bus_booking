@@ -22,10 +22,8 @@ const SeatLayout = ({ tripId, price, onClose }) => {
       try {
         setLoading(true);
         const response = await axios.get(`http://localhost:8080/api/seat-availability/layout/trip/${tripId}`);
-        console.log('Full Layout Data from API:', response.data.data);
         setLayout(response.data.data || []);
       } catch (err) {
-        console.error('Error fetching seat layout:', err);
         setError('Failed to load seat layout.');
       } finally {
         setLoading(false);
@@ -34,6 +32,21 @@ const SeatLayout = ({ tripId, price, onClose }) => {
 
     if (tripId) {
       fetchLayout();
+      
+      // Restore pending seats if they belong to this trip
+      const pending = localStorage.getItem('pendingBooking');
+      if (pending) {
+        try {
+          const { tripId: pendingTripId, selectedSeats: pendingSeats } = JSON.parse(pending);
+          if (Number(pendingTripId) === Number(tripId) && Array.isArray(pendingSeats)) {
+            setSelectedSeats(pendingSeats);
+            // Clear it so it doesn't persist forever
+            localStorage.removeItem('pendingBooking');
+          }
+        } catch (e) {
+          // Silent error for parsing
+        }
+      }
     }
   }, [tripId]);
 
@@ -47,7 +60,7 @@ const SeatLayout = ({ tripId, price, onClose }) => {
         });
         if (res.data.success) setUserPref(res.data.data);
       } catch (err) {
-        console.error('Preference fetch error:', err);
+        // Silent error for preference
       }
     };
     fetchUserPreference();
@@ -55,8 +68,6 @@ const SeatLayout = ({ tripId, price, onClose }) => {
 
   const toggleSeat = (seat) => {
     if (seat.isBooked) return;
-    console.log('Toggling seat. Available keys:', Object.keys(seat));
-    console.log('Seat object details:', JSON.stringify(seat));
     const isAlreadySelected = selectedSeats.find(s => s.seatNumber === seat.seatNumber);
 
     if (isAlreadySelected) {
@@ -71,7 +82,6 @@ const SeatLayout = ({ tripId, price, onClose }) => {
       // Store necessary info: ID (check multiple keys as backend naming might vary)
       // PRIORITY: We need the physical Seat ID (seatId) for the booking API findByTripIdAndSeatId
       const id = seat.seatId || seat.id || seat.availabilityId || (seat.seat && seat.seat.id);
-      console.log(`Seat ${seat.seatNumber} selected with ID:`, id);
       setSelectedSeats([...selectedSeats, { seatId: id, seatNumber: seat.seatNumber }]);
       setMaxSeatError(false);
     }
@@ -80,6 +90,11 @@ const SeatLayout = ({ tripId, price, onClose }) => {
   const handleProceed = () => {
     const token = localStorage.getItem('token');
     if (!token) {
+      // Save pending booking state so it can be resumed after login
+      localStorage.setItem('pendingBooking', JSON.stringify({
+        tripId,
+        selectedSeats
+      }));
       navigate('/login');
       return;
     }
@@ -87,8 +102,7 @@ const SeatLayout = ({ tripId, price, onClose }) => {
     // Critical Check: Ensure all selected seats have IDs
     const missingId = selectedSeats.find(s => !s.seatId);
     if (missingId) {
-      alert(`Critical Error: Seat ${missingId.seatNumber} has no internal ID. Please contact support or refresh the page.`);
-      console.error('Selected seat missing ID:', missingId);
+      setError(`Critical Error: Seat ${missingId.seatNumber} has no internal ID. Please contact support or refresh the page.`);
       return;
     }
 
@@ -155,10 +169,13 @@ const SeatLayout = ({ tripId, price, onClose }) => {
             {(() => {
               if (!layout || layout.length === 0) return null;
 
-              const hasUpper = layout.flat().some(s => s && s.seatNumber && s.seatNumber.startsWith('U'));
+              const flattened = layout.flat();
+              const hasUpper = flattened.some(s => s && s.seatNumber && s.seatNumber.startsWith('U'));
+              const hasLower = flattened.some(s => s && s.seatNumber && s.seatNumber.startsWith('L'));
+              const isSleeperBus = hasUpper || hasLower;
 
               const renderSeat = (seat) => {
-                const isSelected = selectedSeats.some(s => s.seatNumber === seat.seatNumber);
+                const isSelected = Array.isArray(selectedSeats) && selectedSeats.some(s => s && s.seatNumber === seat.seatNumber);
                 const isRecommended = userPref && !seat.isBooked && 
                   (seat.seatType === userPref.preferredSeatType || seat.deckType === userPref.preferredDeckType);
                 
@@ -203,12 +220,15 @@ const SeatLayout = ({ tripId, price, onClose }) => {
               };
 
               const renderDeckRow = (rowSeats, deckPrefix) => {
-                let deckSeats = rowSeats.filter(s => s && s.seatNumber && s.seatNumber.startsWith(deckPrefix));
-                if (deckPrefix === '' && !hasUpper) deckSeats = rowSeats;
+                let deckSeats;
+                if (isSleeperBus) {
+                  deckSeats = rowSeats.filter(s => s && s.seatNumber && s.seatNumber.startsWith(deckPrefix));
+                } else {
+                  // For Seater buses, we render everything in the "Lower" pass
+                  deckSeats = deckPrefix === 'L' ? rowSeats : [];
+                }
                 
-                if (deckSeats.length === 0) return <div className="h-10"></div>; 
-
-                // Do not sort dynamically; rely on the backend column order.
+                if (deckSeats.length === 0) return null; 
 
                 return (
                   <div className="flex gap-1 justify-start w-max">
@@ -231,29 +251,35 @@ const SeatLayout = ({ tripId, price, onClose }) => {
                       {/* Lower Deck Column */}
                       <div className="flex flex-col items-center w-max">
                          <div className="mb-4 px-4 py-1 bg-slate-100 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-widest border border-slate-200 shadow-sm">
-                            Lower Deck
+                            {isSleeperBus ? 'Lower Deck' : 'Bus Layout'}
                          </div>
                          <div className="flex flex-col gap-1.5 items-start w-full">
-                            {layout.map((row, i) => (
-                               <div key={`L-${i}`} className="flex items-center">
-                                  {renderDeckRow(row, 'L')}
-                               </div>
-                            ))}
+                            {layout.map((row, i) => {
+                               const rowContent = renderDeckRow(row, 'L');
+                               return rowContent ? (
+                                 <div key={`L-${i}`} className="flex items-center">
+                                    {rowContent}
+                                 </div>
+                               ) : null;
+                            })}
                          </div>
                       </div>
 
                       {/* Upper Deck Column */}
-                      {hasUpper && (
+                      {isSleeperBus && hasUpper && (
                          <div className="flex flex-col items-center border-l-2 border-dashed border-gray-200 pl-4 sm:pl-8 w-max">
                             <div className="mb-4 px-4 py-1 bg-slate-100 rounded-full text-[10px] font-bold text-slate-500 uppercase tracking-widest border border-slate-200 shadow-sm">
                                Upper Deck
                             </div>
                             <div className="flex flex-col gap-1.5 items-start w-full">
-                               {layout.map((row, i) => (
-                                  <div key={`U-${i}`} className="flex items-center">
-                                     {renderDeckRow(row, 'U')}
-                                  </div>
-                               ))}
+                               {layout.map((row, i) => {
+                                 const rowContent = renderDeckRow(row, 'U');
+                                 return rowContent ? (
+                                   <div key={`U-${i}`} className="flex items-center">
+                                      {rowContent}
+                                   </div>
+                                 ) : null;
+                               })}
                             </div>
                          </div>
                       )}

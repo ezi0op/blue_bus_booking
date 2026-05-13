@@ -73,11 +73,13 @@ public class Route {
 	// One route → many stops
 	@OneToMany(mappedBy = "route", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	@ToString.Exclude
+	@com.fasterxml.jackson.annotation.JsonIgnore
 	private List<Stop> stops;
 
 	// One route → many trips
 	@OneToMany(mappedBy = "route", fetch = FetchType.LAZY)
 	@ToString.Exclude
+	@com.fasterxml.jackson.annotation.JsonIgnore
 	private List<Trip> trips;
 
 	@CreationTimestamp

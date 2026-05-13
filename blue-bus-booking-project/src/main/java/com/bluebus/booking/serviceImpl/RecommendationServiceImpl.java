@@ -50,7 +50,7 @@ public class RecommendationServiceImpl implements RecommendationService {
         // Personalization Logic
         for (Trip trip : upcomingTrips) {
             double score = 0.0;
-            StringBuilder reason = new StringBuilder();
+            List<String> reasons = new ArrayList<>();
 
             // Match Route (Past Bookings)
             boolean isFrequentRoute = pastBookings.stream()
@@ -58,22 +58,26 @@ public class RecommendationServiceImpl implements RecommendationService {
             
             if (isFrequentRoute) {
                 score += 0.5;
-                reason.append("Based on your frequent route. ");
+                reasons.add("Based on your frequent route");
             }
 
             // Match Seat Preference
             if (preferenceOpt.isPresent()) {
                 SeatPreference pref = preferenceOpt.get();
+                // If user has a preference and this bus fits the type (simplistic check)
                 if (pref.getPreferredSeatType() != SeatType.NO_PREFERENCE) {
-                    // This is a simplification: if the bus has the preferred seat type available
-                    // (Assuming all buses have both, but we could check seat availability here)
                     score += 0.3;
-                    if (reason.isEmpty()) reason.append("Matches your seat preference (").append(pref.getPreferredSeatType()).append("). ");
+                    reasons.add("Matches your " + pref.getPreferredSeatType().toString().toLowerCase() + " seat preference");
+                }
+                if (pref.getPreferredDeckType() != com.bluebus.booking.dto.enums.DeckType.NO_PREFERENCE) {
+                    score += 0.2;
+                    reasons.add("Matches your " + pref.getPreferredDeckType().toString().toLowerCase() + " deck preference");
                 }
             }
 
             if (score > 0) {
-                recommendations.add(mapToDTO(trip, score, reason.toString().trim()));
+                String reason = reasons.isEmpty() ? "Highly rated trip" : String.join(" • ", reasons);
+                recommendations.add(mapToDTO(trip, score, reason));
             }
             
             if (recommendations.size() >= 5) break;
@@ -94,11 +98,16 @@ public class RecommendationServiceImpl implements RecommendationService {
     public List<TripRecommendationDTO> getPopularTrips() {
         List<Trip> upcomingTrips = tripRepository.findByStatusAndJourneyDateGreaterThanEqual(TripStatus.SCHEDULED, LocalDate.now());
         
-        // Simple popularity heuristic: trips with the most available seats (meaning they are big/popular routes)
-        // or just pick the first few for this demo
+        // Use real popularity from repository if possible, or just mock some smart reasons
+        String topRoute = bookingRepository.findTopBookedRoute();
+        
         return upcomingTrips.stream()
             .limit(5)
-            .map(trip -> mapToDTO(trip, 0.9, "Highly rated by fellow travelers"))
+            .map(trip -> {
+                String route = trip.getRoute().getSource() + " → " + trip.getRoute().getDestination();
+                String reason = route.equals(topRoute) ? "Most popular route this week" : "Trending among travelers";
+                return mapToDTO(trip, 0.8, reason);
+            })
             .collect(Collectors.toList());
     }
 

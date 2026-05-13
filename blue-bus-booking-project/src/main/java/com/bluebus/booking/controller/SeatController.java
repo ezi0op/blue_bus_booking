@@ -21,6 +21,16 @@ public class SeatController {
 	@Autowired
 	private SeatService seatService;
 
+	@GetMapping
+	public ApiResponse<List<SeatDTO>> getAllSeats() {
+		List<Seat> seats = seatService.getAllSeats();
+		List<SeatDTO> response = new ArrayList<>();
+		for (Seat s : seats) {
+			response.add(mapToDTO(s));
+		}
+		return new ApiResponse<>(true, "All seats fetched", response);
+	}
+
 	@GetMapping("/bus/{busId}")
 	public ApiResponse<List<SeatDTO>> getSeatsByBus(@PathVariable Long busId) {
 		List<Seat> seats = seatService.getSeatsByBus(busId);

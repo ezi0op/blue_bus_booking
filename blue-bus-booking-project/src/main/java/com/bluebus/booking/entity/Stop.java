@@ -2,6 +2,8 @@ package com.bluebus.booking.entity;
 
 import java.time.LocalTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -73,6 +75,7 @@ public class Stop {
 	// Many stops → one route
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "route_id", nullable = false)
+	@com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
 	@ToString.Exclude
 	private Route route;
 

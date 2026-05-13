@@ -69,10 +69,8 @@ public class BusOperatorServiceImpl implements BusOperatorService {
 	public BusOperator deactivateOperator(Long id) {
 		BusOperator operator = getOperatorById(id);
 
-		if (!operator.getIsActive()) {
-			throw new RuntimeException("Operator already inactive");
-		}
-		operator.setIsActive(false);
+		// Toggle status instead of just deactivating
+		operator.setIsActive(!operator.getIsActive());
 
 		return busOperatorRepository.save(operator);
 	}

@@ -66,7 +66,8 @@ public class AdminCouponController {
 	private Coupon mapToEntity(CouponRequestDTO request) {
 		return Coupon.builder().couponCode(request.getCouponCode()).description(request.getDescription())
 				.discountAmount(request.getDiscountAmount()).minimumBookingAmount(request.getMinimumBookingAmount())
-				.isActive(request.getIsActive()).expiryDate(request.getExpiryDate()).build();
+				.isActive(request.getIsActive())
+				.expiryDate(request.getExpiryDate() != null ? request.getExpiryDate().atTime(23, 59, 59) : null).build();
 	}
 
 	private CouponResponseDTO mapToResponseDTO(Coupon coupon, String message) {

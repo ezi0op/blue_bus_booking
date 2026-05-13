@@ -14,7 +14,7 @@ public interface BookingService {
 
 	Booking confirmBooking(Long bookingId);
 
-	Booking cancelBooking(Long bookingId);
+	Booking cancelBooking(Long bookingId, boolean isFullRefund);
 
 	String generateBookingReference();
 

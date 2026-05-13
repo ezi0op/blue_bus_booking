@@ -63,11 +63,11 @@ const LogIn = () => {
             localStorage.setItem('userId', userId);
             localStorage.setItem('userName', userData.name);
             localStorage.setItem('userImage', userData.image || '');
+            localStorage.setItem('loginTimestamp', Date.now().toString());
             
             // Auto-redirect based on role
             if (userRole === 'ADMIN') {
-              // navigate('/admin-dashboard'); // If you have an admin page
-              navigate('/'); 
+              navigate('/admin'); 
             } else {
               navigate('/');
             }

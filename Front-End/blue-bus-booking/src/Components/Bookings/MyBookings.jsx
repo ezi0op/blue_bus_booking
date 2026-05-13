@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Ticket, Calendar, MapPin, User, ChevronRight, AlertCircle, ArrowLeft, Clock, CreditCard, ChevronDown } from 'lucide-react';
+import { Ticket, Calendar, MapPin, User, ChevronRight, AlertCircle, ArrowLeft, Clock, CreditCard, ChevronDown, X } from 'lucide-react';
 import BookingItem from './BookingItem';
 
 const MyBookings = () => {
@@ -37,7 +37,6 @@ const MyBookings = () => {
           setError('Failed to load your bookings.');
         }
       } catch (err) {
-        console.error('Error fetching bookings:', err);
         setError('Error connecting to server. Please try again later.');
       } finally {
         setLoading(false);
@@ -46,6 +45,36 @@ const MyBookings = () => {
 
     fetchBookings();
   }, [navigate]);
+
+  const handleCancel = async (bookingId) => {
+    if (!window.confirm('Are you sure you want to cancel this booking? Refund will be processed as per policy.')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    try {
+      setLoading(true);
+      const response = await axios.put(`http://localhost:8080/api/bookings/${bookingId}/cancel`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        // Refresh bookings
+        const userId = localStorage.getItem('userId');
+        const refreshResponse = await axios.get(`http://localhost:8080/api/bookings/user/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setBookings(refreshResponse.data.data || []);
+        alert('Booking cancelled and refund initiated successfully!');
+      } else {
+        setError(response.data.message || 'Failed to cancel booking.');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error cancelling booking.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDownload = async (bookingId, type) => {
     const token = localStorage.getItem('token');
@@ -68,8 +97,7 @@ const MyBookings = () => {
       link.click();
       link.remove();
     } catch (err) {
-      console.error(`Error downloading ${type}:`, err);
-      alert(`Failed to download ${type}. Please try again later.`);
+      setError(`Failed to download ${type}. Please try again later.`);
     }
   };
 
@@ -232,6 +260,12 @@ const MyBookings = () => {
                          className="text-xs font-black text-gray-700 hover:text-blue-600 flex items-center gap-1 transition-colors"
                        >
                          <CreditCard size={14} /> Invoice
+                       </button>
+                       <button 
+                         onClick={() => handleCancel(booking.id)}
+                         className="text-xs font-black text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors ml-auto"
+                       >
+                         <X size={14} /> Cancel Booking
                        </button>
                      </>
                    )}

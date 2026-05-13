@@ -51,10 +51,6 @@ public class UserServiceImpl implements UserService {
 	public User updateUserStatus(Long userId, boolean active) {
 		User user = getUserById(userId);
 
-		if (user.getIsActive() == active) {
-			throw new RuntimeException("User already " + (active ? "active" : "inactive"));
-		}
-
 		user.setIsActive(active);
 
 		return userRepository.save(user);

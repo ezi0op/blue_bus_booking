@@ -42,6 +42,12 @@ public class BookingServiceImpl implements BookingService {
 	@Autowired
 	private EmailService emailService;
 
+	@Autowired
+	private com.bluebus.booking.service.PaymentService paymentService;
+
+	@Autowired
+	private com.bluebus.booking.service.SeatPreferenceService seatPreferenceService;
+
 	@Override
 	@Transactional
 	public Booking createBooking(CreateBookingRequest request) {
@@ -65,7 +71,7 @@ public class BookingServiceImpl implements BookingService {
 
 		for (var p : request.getPassengers()) {
 
-			SeatAvailability seat = seatAvailabilityRepository.findByTripIdAndSeatId(request.getTripId(), p.getSeatId())
+			SeatAvailability seat = seatAvailabilityRepository.findWithLock(request.getTripId(), p.getSeatId())
 					.orElseThrow(() -> new RuntimeException("Seat not found"));
 
 			if (seat.getIsBooked()) {
@@ -162,40 +168,62 @@ public class BookingServiceImpl implements BookingService {
 
 		}
 		booking.setStatus(BookingStatus.CONFIRMED);
-		return bookingRepository.save(booking);
+		booking = bookingRepository.save(booking);
+
+		// 🔥 AI ANALYTICS: Update Seat Preference after confirmation
+		try {
+			seatPreferenceService.updatePreferenceFromBooking(booking.getUser().getId(), booking.getId());
+		} catch (Exception e) {
+			// Don't fail confirmation if analytics fail
+			System.err.println("Failed to update AI seat preference: " + e.getMessage());
+		}
+
+		return booking;
 	}
 
 	@Transactional
 	@Override
-	public Booking cancelBooking(Long bookingId) {
-
+	public Booking cancelBooking(Long bookingId, boolean isFullRefund) {
 		Booking booking = getBookingById(bookingId);
 
 		if (booking.getStatus() == BookingStatus.CANCELLED) {
 			throw new RuntimeException("Booking already cancelled");
 		}
 
+		// If payment was completed, use the payment service to process refund + cancellation
+		if (booking.getPaymentCompleted()) {
+			paymentService.processRefund(bookingId, "Cancellation requested", isFullRefund);
+			return getBookingById(bookingId); // Return the updated booking
+		}
+
+		// Otherwise, manually cancel and release seats (for PENDING or unpaid bookings)
 		List<BookingItem> items = booking.getBookingItems();
-
 		for (BookingItem item : items) {
-
-			SeatAvailability seat = seatAvailabilityRepository
-					.findByTripIdAndSeatId(booking.getTrip().getId(), item.getSeat().getId())
-					.orElseThrow(() -> new RuntimeException("Seat not found"));
-
-			seat.setIsBooked(false);
-			seat.setIsLocked(false);
-			seat.setLockTime(null);
-			seat.setLockExpiryTime(null);
-			seat.setBooking(null);
-
-			seatAvailabilityRepository.save(seat);
+			seatAvailabilityRepository.findByTripIdAndSeatId(booking.getTrip().getId(), item.getSeat().getId())
+					.ifPresent(seat -> {
+						seat.setIsBooked(false);
+						seat.setIsLocked(false);
+						seat.setLockTime(null);
+						seat.setLockExpiryTime(null);
+						seat.setBooking(null);
+						seatAvailabilityRepository.save(seat);
+					});
 		}
 
 		booking.setStatus(BookingStatus.CANCELLED);
 		booking.setCancellationTime(LocalDateTime.now());
-
-		return bookingRepository.save(booking);
+		booking = bookingRepository.save(booking);
+		
+		// Send cancellation email (No refund)
+		emailService.sendBookingCancellation(
+				booking.getContactEmail(), 
+				booking.getBookingReference(), 
+				booking.getTrip().getRoute().getSource(), 
+				booking.getTrip().getRoute().getDestination(), 
+				booking.getTrip().getJourneyDate().toString()
+		);
+		
+		return booking;
 	}
 
 	@Override

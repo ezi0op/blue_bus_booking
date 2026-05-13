@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bus, Clock, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { Bus, Clock, ChevronDown, ChevronUp, Sparkles, Calendar } from 'lucide-react';
 import BusOperatorInfo from '../BusOperator/BusOperatorInfo';
 
 const TripResultCard = ({ 
@@ -26,6 +26,10 @@ const TripResultCard = ({
 
       <div className="flex-1 flex justify-between items-center w-full">
         <div className="text-center md:text-left">
+          <div className="flex items-center gap-2 mb-1">
+            <Calendar size={14} className="text-blue-600" />
+            <span className="text-xs font-black text-blue-600 uppercase tracking-tighter">{trip.journeyDate}</span>
+          </div>
           <p className="text-2xl font-bold text-gray-800">{trip.departureTime?.slice(0, 5) || trip.departureTime}</p>
           <p className="text-sm font-semibold text-gray-500 mt-1 uppercase">{from || trip.source}</p>
           

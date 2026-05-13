@@ -39,15 +39,22 @@ public class CancellationPolicyServiceImpl implements CancellationPolicyService 
 		/*
 		 * Cancellation Policy Rules
 		 *
-		 * > 24 hrs → 100% refund > 12 hrs → 50% refund <= 2 hrs → No refund
+		 * >= 24 hrs → 100% refund 
+		 * >= 12 hrs → 70% refund 
+		 * >= 4 hrs  → 40% refund
+		 * < 4 hrs   → No refund
 		 */
 
-		if (hoursBeforeJourney > 24) {
+		if (hoursBeforeJourney >= 24) {
 			return finalAmount;
 		}
 
-		if (hoursBeforeJourney > 12) {
-			return finalAmount.multiply(BigDecimal.valueOf(0.50));
+		if (hoursBeforeJourney >= 12) {
+			return finalAmount.multiply(BigDecimal.valueOf(0.70));
+		}
+
+		if (hoursBeforeJourney >= 4) {
+			return finalAmount.multiply(BigDecimal.valueOf(0.40));
 		}
 
 		return BigDecimal.ZERO;

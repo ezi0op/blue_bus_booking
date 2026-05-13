@@ -55,12 +55,15 @@ public class SeatServiceImpl implements SeatService {
 	public Seat deactivateSeat(Long id) {
 		Seat seat = getSeatById(id);
 
-		if (!seat.getIsActive()) {
-			throw new RuntimeException("Seat already inactive");
-		}
-		seat.setIsActive(false);
+		// Toggle status instead of just deactivating
+		seat.setIsActive(!seat.getIsActive());
 
 		return seatRepository.save(seat);
+	}
+
+	@Override
+	public List<Seat> getAllSeats() {
+		return seatRepository.findAll();
 	}
 
 }

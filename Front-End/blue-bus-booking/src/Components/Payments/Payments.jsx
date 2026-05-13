@@ -70,7 +70,6 @@ export const handlePayment = async ({ bookingId, amount, userEmail, userPhone, p
             onError('Payment verification failed.');
           }
         } catch (err) {
-          console.error('Verification Error:', err);
           onError('Error verifying payment.');
         }
       },
@@ -95,7 +94,7 @@ export const handlePayment = async ({ bookingId, amount, userEmail, userPhone, p
                 headers: { Authorization: `Bearer ${token}` }
              });
           } catch (e) {
-             console.error('Failed call error:', e);
+             // Silent error
           }
           onError('Payment cancelled by user.');
         }
@@ -114,7 +113,7 @@ export const handlePayment = async ({ bookingId, amount, userEmail, userPhone, p
           headers: { Authorization: `Bearer ${token}` }
         });
       } catch (err) {
-        console.error('Error marking failed payment:', err);
+        // Silent error
       }
       onError(`Payment failed: ${response.error.description}`);
     });
@@ -122,7 +121,6 @@ export const handlePayment = async ({ bookingId, amount, userEmail, userPhone, p
     rzp.open();
 
   } catch (err) {
-    console.error('Payment Initialization Error:', err);
     onError(err.response?.data?.message || 'Failed to initialize payment.');
   }
 };

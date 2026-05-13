@@ -1,11 +1,10 @@
 package com.bluebus.booking.dto;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-import com.bluebus.booking.dto.enums.TripStatus;
+import com.bluebus.booking.dto.enums.BusType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,20 +22,25 @@ public class TripDTO {
 	private Long routeId;
 	private Long busId;
 
+	private String source;
+	private String destination;
+	private String busName;
+	private BusType busType;
+
 	private LocalDate journeyDate;
 
 	private LocalTime departureTime;
 	private LocalDateTime arrivalTime;
 
-	private BigDecimal price;
+	private java.math.BigDecimal price;
 
 	private Integer totalSeats;
 	private Integer availableSeats;
 	private Integer bookedSeats;
 
-	private TripStatus status;
+	private com.bluebus.booking.dto.enums.TripStatus status;
 
-	private BigDecimal rating;
+	private java.math.BigDecimal rating;
 
 	private LocalDateTime cancelledAt;
 

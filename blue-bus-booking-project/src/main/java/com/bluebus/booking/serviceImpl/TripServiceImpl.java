@@ -177,10 +177,12 @@ public class TripServiceImpl implements TripService {
 	@Override
 	@Transactional
 	public void cancelTripByAdmin(Long tripId, String reason) {
+		log.info("Starting admin cancellation for trip {}", tripId);
 		Trip trip = tripRepository.findById(tripId).orElseThrow(() -> new RuntimeException("Trip not found"));
 
 		if (trip.getStatus() == TripStatus.CANCELLED) {
-			throw new RuntimeException("Trip already cancelled");
+			log.warn("Trip {} is already cancelled. Skipping.", tripId);
+			return;
 		}
 
 		LocalDateTime departureDateTime = LocalDateTime.of(trip.getJourneyDate(), trip.getDepartureTime());
@@ -188,35 +190,57 @@ public class TripServiceImpl implements TripService {
 			throw new RuntimeException("Cannot cancel past trip");
 		}
 
+		// 1. Mark trip as cancelled immediately and flush to DB
 		trip.setStatus(TripStatus.CANCELLED);
 		trip.setCancelledAt(LocalDateTime.now());
+		tripRepository.saveAndFlush(trip);
+		log.info("Trip {} status marked as CANCELLED in database", tripId);
 
 		List<Booking> bookings = bookingRepository.findByTripId(tripId);
+		log.info("Found {} bookings for trip {}", bookings.size(), tripId);
 
 		for (Booking booking : bookings) {
-
-			if (booking.getStatus() != BookingStatus.CONFIRMED) {
+			if (booking.getStatus() == BookingStatus.CANCELLED) {
 				continue;
 			}
 
-			booking.setStatus(BookingStatus.CANCELLED);
-			booking.setCancellationTime(LocalDateTime.now());
-
-			try {
-				paymentService.processRefund(booking.getId(), "Trip cancelled by admin: " + reason);
-			} catch (Exception e) {
-				log.error("Refund failed for booking {}", booking.getId());
+			boolean refundProcessed = false;
+			if (booking.getStatus() == BookingStatus.CONFIRMED) {
+				try {
+					log.info("Processing refund for booking {}", booking.getId());
+					paymentService.processRefund(booking.getId(), "Trip cancelled by admin: " + reason, true);
+					refundProcessed = true;
+				} catch (Exception e) {
+					log.error("Refund failed for booking {}: {}. Will attempt manual cancellation.", booking.getId(), e.getMessage());
+				}
 			}
 
-			emailService.sendBookingCancellation(booking);
+			if (!refundProcessed) {
+				log.info("Manually cancelling booking {}", booking.getId());
+				booking.setStatus(BookingStatus.CANCELLED);
+				booking.setCancellationTime(LocalDateTime.now());
+				bookingRepository.saveAndFlush(booking);
 
-			bookingRepository.save(booking);
+				try {
+					emailService.sendBookingCancellation(
+							booking.getContactEmail(),
+							booking.getBookingReference(),
+							trip.getRoute().getSource(),
+							trip.getRoute().getDestination(),
+							trip.getJourneyDate().toString()
+					);
+				} catch (Exception e) {
+					log.error("Failed to send cancellation email for booking {}: {}", booking.getId(), e.getMessage());
+				}
+			}
 		}
 
-		tripRepository.save(trip);
-
 		log.info("Trip {} cancelled by admin successfully", tripId);
+	}
 
+	@Override
+	public List<Trip> getAllTrips() {
+		return tripRepository.findAll();
 	}
 
 }

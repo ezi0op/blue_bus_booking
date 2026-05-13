@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Tag, Sparkles, AlertCircle, CheckCircle2, Loader2, X } from 'lucide-react';
+import AvailableCoupons from './AvailableCoupons';
 
 const Coupons = ({ bookingAmount, onApplySuccess, onRemove }) => {
   const [couponCode, setCouponCode] = useState('');
@@ -8,8 +9,9 @@ const Coupons = ({ bookingAmount, onApplySuccess, onRemove }) => {
   const [error, setError] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
 
-  const handleApply = async () => {
-    if (!couponCode.trim()) return;
+  const handleApply = async (codeToApply) => {
+    const code = codeToApply || couponCode;
+    if (!code.trim()) return;
     
     setLoading(true);
     setError('');
@@ -17,7 +19,7 @@ const Coupons = ({ bookingAmount, onApplySuccess, onRemove }) => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post('http://localhost:8080/api/coupons/apply', {
-        couponCode: couponCode.toUpperCase(),
+        couponCode: code.toUpperCase(),
         bookingAmount: bookingAmount
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -26,7 +28,8 @@ const Coupons = ({ bookingAmount, onApplySuccess, onRemove }) => {
       if (response.data.success) {
         const data = response.data.data;
         setAppliedCoupon(data);
-        onApplySuccess(data, couponCode.toUpperCase());
+        setCouponCode(code.toUpperCase());
+        onApplySuccess(data, code.toUpperCase());
       } else {
         setError(response.data.message || 'Invalid coupon code.');
       }
@@ -69,7 +72,7 @@ const Coupons = ({ bookingAmount, onApplySuccess, onRemove }) => {
               )}
             </div>
             <button
-              onClick={handleApply}
+              onClick={() => handleApply()}
               disabled={loading || !couponCode.trim()}
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold px-5 rounded-xl text-sm transition-all active:scale-95"
             >
@@ -83,11 +86,6 @@ const Coupons = ({ bookingAmount, onApplySuccess, onRemove }) => {
               {error}
             </div>
           )}
-
-          <div className="flex items-center gap-2 text-[10px] text-gray-400 font-medium px-1 mt-1">
-            <Sparkles size={12} className="text-yellow-500" />
-            Check email for exclusive promo codes!
-          </div>
         </div>
       ) : (
         <div className="bg-green-50 border border-green-100 rounded-xl p-3 flex items-center justify-between">

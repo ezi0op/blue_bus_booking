@@ -1,5 +1,5 @@
 import React from 'react'
-import { MapPin, Clock, ArrowRight, Zap, Navigation, ShieldCheck } from 'lucide-react'
+import { MapPin, Clock, ArrowRight, Zap, Navigation, ShieldCheck, Calendar } from 'lucide-react'
 
 const RouteCard = ({ route, onExplore }) => {
   if (!route) return null;
@@ -60,23 +60,32 @@ const RouteCard = ({ route, onExplore }) => {
           </div>
 
           {/* Metrics */}
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
-            <div className="flex items-center gap-3">
+          <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-50">
+            <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-blue-500 transition-colors">
                 <Clock size={14} />
               </div>
               <div className="flex flex-col">
                 <span className="text-[9px] font-bold text-gray-400 uppercase">Duration</span>
-                <span className="text-sm font-black text-gray-700">{route.duration}h</span>
+                <span className="text-[11px] font-black text-gray-700">{route.duration}h</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 border-x border-gray-50 px-2">
+              <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-purple-500 transition-colors">
+                <Calendar size={14} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-gray-400 uppercase">Schedule</span>
+                <span className="text-[11px] font-black text-gray-700">{route.nextDate || 'Daily'}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 pl-2">
               <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-green-500 transition-colors">
                 <Navigation size={14} />
               </div>
               <div className="flex flex-col">
                 <span className="text-[9px] font-bold text-gray-400 uppercase">Distance</span>
-                <span className="text-sm font-black text-gray-700">{route.distance}km</span>
+                <span className="text-[11px] font-black text-gray-700">{route.distance}km</span>
               </div>
             </div>
           </div>

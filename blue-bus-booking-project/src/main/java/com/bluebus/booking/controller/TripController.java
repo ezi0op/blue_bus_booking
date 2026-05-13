@@ -25,6 +25,16 @@ public class TripController {
 	@Autowired
 	private TripService tripService;
 
+	@GetMapping
+	public ApiResponse<List<TripDTO>> getAllTrips() {
+		List<Trip> trips = tripService.getAllTrips();
+		List<TripDTO> response = new ArrayList<>();
+		for (Trip t : trips) {
+			response.add(mapToDTO(t));
+		}
+		return new ApiResponse<>(true, "All trips fetched", response);
+	}
+
 	@PostMapping("/search")
 	public ApiResponse<List<TripDTO>> searchTrips(@RequestBody TripSearchRequest request,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size,
@@ -67,7 +77,13 @@ public class TripController {
 
 	// 🔁 MAPPER
 	private TripDTO mapToDTO(Trip trip) {
-		return TripDTO.builder().id(trip.getId()).routeId(trip.getRoute().getId()).busId(trip.getBus().getId())
+		return TripDTO.builder().id(trip.getId())
+				.routeId(trip.getRoute().getId())
+				.source(trip.getRoute().getSource())
+				.destination(trip.getRoute().getDestination())
+				.busId(trip.getBus().getId())
+				.busName(trip.getBus().getBusNumber())
+				.busType(trip.getBus().getBusType())
 				.journeyDate(trip.getJourneyDate()).departureTime(trip.getDepartureTime())
 				.arrivalTime(trip.getArrivalTime()).price(trip.getPrice()).status(trip.getStatus())
 				.totalSeats(trip.getTotalSeats()).availableSeats(trip.getAvailableSeats())

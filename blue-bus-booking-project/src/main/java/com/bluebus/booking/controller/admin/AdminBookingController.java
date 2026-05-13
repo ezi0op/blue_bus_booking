@@ -51,9 +51,9 @@ public class AdminBookingController {
 	@PutMapping("/{id}/cancel")
 	public ApiResponse<BookingResponseDTO> cancel(@PathVariable Long id) {
 
-		Booking booking = bookingService.cancelBooking(id);
+		Booking booking = bookingService.cancelBooking(id, true);
 
-		return new ApiResponse<>(true, "Booking cancelled by admin", mapToDTO(booking));
+		return new ApiResponse<>(true, "Booking cancelled by admin (Full Refund Issued)", mapToDTO(booking));
 	}
 
 	// 🔁 Admin booking MAPPER

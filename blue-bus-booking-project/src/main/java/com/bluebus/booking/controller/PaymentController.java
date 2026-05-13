@@ -87,7 +87,7 @@ public class PaymentController {
 	public ApiResponse<PaymentResponseDTO> processRefund(@PathVariable Long bookingId,
 			@RequestParam(defaultValue = "Cancelled by user") String reason) {
 		return new ApiResponse<>(true, "Refund processed successfully",
-				paymentService.processRefund(bookingId, reason));
+				paymentService.processRefund(bookingId, reason, false));
 	}
 
 	@PostMapping("/offline")

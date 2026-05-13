@@ -58,7 +58,13 @@ public class AdminTripController {
 
 	// 🔁 MAPPER
 	private TripDTO mapToDTO(Trip trip) {
-		return TripDTO.builder().id(trip.getId()).routeId(trip.getRoute().getId()).busId(trip.getBus().getId())
+		return TripDTO.builder().id(trip.getId())
+				.routeId(trip.getRoute().getId())
+				.source(trip.getRoute().getSource())
+				.destination(trip.getRoute().getDestination())
+				.busId(trip.getBus().getId())
+				.busName(trip.getBus().getBusNumber())
+				.busType(trip.getBus().getBusType())
 				.journeyDate(trip.getJourneyDate()).departureTime(trip.getDepartureTime())
 				.arrivalTime(trip.getArrivalTime()).price(trip.getPrice()).status(trip.getStatus()).build();
 	}

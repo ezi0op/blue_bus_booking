@@ -22,4 +22,6 @@ public interface TripService {
 	void cancelTripByAdmin(Long tripId, String reason);
 
 	List<Trip> searchTrips(TripSearchRequest request, int page, int size, String sortBy, String direction);
+
+	List<Trip> getAllTrips();
 }

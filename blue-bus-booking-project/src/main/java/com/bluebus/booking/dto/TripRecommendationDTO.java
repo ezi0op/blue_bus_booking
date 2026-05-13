@@ -16,10 +16,13 @@ public class TripRecommendationDTO {
     private String source;
     private String destination;
     private String busName;
+    private String busNumber;
     private String busType;
     private BigDecimal price;
     private String journeyDate;
+    private String arrivalTime;
     private String departureTime;
+   
     private int availableSeats;
     private String recommendationReason;
     private double matchScore;

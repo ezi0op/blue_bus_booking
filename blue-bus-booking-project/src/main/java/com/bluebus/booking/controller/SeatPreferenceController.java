@@ -33,4 +33,12 @@ public class SeatPreferenceController {
 
 		return new ApiResponse<>(true, "Suggested seat type fetched successfully", suggestedSeat);
 	}
+
+	@GetMapping("/{userId}/sync")
+	public ApiResponse<String> syncHistory(@PathVariable Long userId) {
+
+		seatPreferenceService.syncAllPastBookings(userId);
+
+		return new ApiResponse<>(true, "AI Seat Insights synced from history", "SUCCESS");
+	}
 }

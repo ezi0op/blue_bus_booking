@@ -33,11 +33,10 @@ const PaymentSuccess = () => {
              setPaymentData(paymentRes.data.data);
           }
         } catch (e) {
-          console.error('Error fetching payment details:', e);
+          // Silent payment error
         }
 
       } catch (err) {
-        console.error('Error fetching booking details:', err);
         setError('Could not load booking details.');
       } finally {
         setLoading(false);
@@ -69,8 +68,7 @@ const PaymentSuccess = () => {
       link.click();
       link.remove();
     } catch (err) {
-      console.error(`Error downloading ${type}:`, err);
-      alert(`Failed to download ${type}. Please try again from My Bookings.`);
+      setError(`Failed to download ${type}. Please try again from My Bookings.`);
     }
   };
 

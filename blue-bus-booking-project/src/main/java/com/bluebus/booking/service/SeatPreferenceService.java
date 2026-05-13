@@ -10,5 +10,7 @@ public interface SeatPreferenceService {
 	SeatType suggestSeatType(Long userId);
 
 	void updatePreferenceFromBooking(Long userId, Long bookId);
+	
+	void syncAllPastBookings(Long userId);
 
 }

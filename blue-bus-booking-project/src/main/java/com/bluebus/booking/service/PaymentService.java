@@ -20,7 +20,7 @@ public interface PaymentService {
 	PaymentResponseDTO getPaymentByBookingId(Long bookingId);
 
 	// Process auto refund
-	PaymentResponseDTO processRefund(Long bookingId, String reason);
+	PaymentResponseDTO processRefund(Long bookingId, String reason, boolean isFullRefund);
 
 	// Process offline payment (Cash, Unknown)
 	public void processOfflinePayment(CreatePaymentRequestDTO request, PaymentMethod paymentMethod);

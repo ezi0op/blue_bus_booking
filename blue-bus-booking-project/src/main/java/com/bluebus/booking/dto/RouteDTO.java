@@ -16,4 +16,5 @@ public class RouteDTO {
 	private Integer duration;
 
 	private Boolean isActive;
+	private java.time.LocalDate nextDate;
 }

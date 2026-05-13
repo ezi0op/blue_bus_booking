@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import logo from '../../../assets/logo.png';
-import { Menu, X, LogIn, UserPlus, User, LogOut, Ticket, ChevronDown, Bus, Sparkles } from 'lucide-react';
+import { Menu, X, LogIn, UserPlus, User, LogOut, Ticket, ChevronDown, Bus, Sparkles, ShieldCheck, LayoutDashboard } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 const Header = () => {
@@ -8,11 +8,25 @@ const Header = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  useEffect(() => {
+    // 2. Auto-logout logic after 1 day (24 hours)
+    const loginTimestamp = localStorage.getItem('loginTimestamp');
+    if (loginTimestamp) {
+      const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+      const timeElapsed = Date.now() - parseInt(loginTimestamp);
+      
+      if (timeElapsed > ONE_DAY_MS) {
+        handleLogout();
+      }
+    }
+  }, [location.pathname]); // Trigger on navigation/refresh
 
   const token = localStorage.getItem('token');
   const userName = localStorage.getItem('userName') || 'User';
   const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
   const userImage = localStorage.getItem('userImage');
+  const userRole = localStorage.getItem('userRole');
 
   const handleLogout = () => {
     localStorage.clear();
@@ -20,6 +34,18 @@ const Header = () => {
   };
 
   return (
+    <>
+    {/* Floating Admin Panel Badge - only for ADMIN role */}
+    {token && userRole === 'ADMIN' && (
+      <div
+        onClick={() => navigate('/admin')}
+        className="fixed bottom-6 left-6 z-[999] flex items-center gap-2 px-5 py-3 bg-[#0d2694] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-blue-900/40 hover:bg-blue-800 transition-all cursor-pointer group animate-in slide-in-from-bottom-4 duration-500"
+      >
+        <LayoutDashboard size={16} className="group-hover:scale-110 transition-transform" />
+        Admin Panel
+        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      </div>
+    )}
     <header className="w-full bg-white shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
@@ -31,6 +57,18 @@ const Header = () => {
 
           {/* Actions */}
           <div className="hidden md:flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/operators')}
+              className="text-gray-600 text-[14px] font-semibold hover:text-blue-600 transition-colors duration-200 flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-gray-50"
+            >
+              <Bus size={16} /> Operators
+            </button>
+            <button 
+              onClick={() => navigate('/offers')}
+              className="text-gray-600 text-[14px] font-semibold hover:text-blue-600 transition-colors duration-200 flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-gray-50"
+            >
+              <Ticket size={16} /> Offers
+            </button>
             {token ? (
               <>
                 <button 
@@ -38,13 +76,6 @@ const Header = () => {
                   className="text-blue-600 text-[14px] font-black hover:text-blue-700 transition-colors duration-200 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50/50 hover:bg-blue-100/50"
                 >
                   <Sparkles size={16} className="animate-pulse" /> AI Search
-                </button>
-
-                <button 
-                  onClick={() => navigate('/operators')}
-                  className="text-gray-600 text-[14px] font-semibold hover:text-blue-600 transition-colors duration-200 flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-gray-50"
-                >
-                  <Bus size={16} /> Operators
                 </button>
 
                 {/* Profile Hover Dropdown */}
@@ -91,6 +122,14 @@ const Header = () => {
                           >
                             <Ticket size={16} /> My Bookings
                           </button>
+                          {userRole === 'ADMIN' && (
+                            <button 
+                              onClick={() => { setProfileOpen(false); navigate('/admin'); }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 text-blue-600 text-[13px] font-black hover:bg-blue-50 rounded-xl transition-colors"
+                            >
+                              <ShieldCheck size={16} /> Admin Dashboard
+                            </button>
+                          )}
                           <div className="h-px bg-gray-100 my-2 mx-2"></div>
                           <button 
                             onClick={handleLogout}
@@ -137,6 +176,18 @@ const Header = () => {
         {/* Mobile Menu Dropdown */}
         {menuOpen && (
           <div className="md:hidden border-t border-gray-100 py-4 flex flex-col gap-4">
+            <button 
+              onClick={() => { setMenuOpen(false); navigate('/operators'); }}
+              className="text-gray-700 font-medium hover:text-blue-600 text-left transition-colors duration-200 flex items-center gap-2"
+            >
+              <Bus size={18} /> Operators
+            </button>
+            <button 
+              onClick={() => { setMenuOpen(false); navigate('/offers'); }}
+              className="text-gray-700 font-medium hover:text-blue-600 text-left transition-colors duration-200 flex items-center gap-2"
+            >
+              <Ticket size={18} /> Offers
+            </button>
             {token && (
               <button 
                 onClick={() => { setMenuOpen(false); navigate('/bookings'); }}
@@ -147,8 +198,10 @@ const Header = () => {
             )}
           </div>
         )}
+
       </div>
     </header>
+    </>
   );
 };
 

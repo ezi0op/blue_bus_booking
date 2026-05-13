@@ -81,17 +81,15 @@ public class BusServiceImpl implements BusService {
 		return busRepository.save(existing);
 	}
 
+	@Transactional
 	@Override
 	public Bus deactivateBus(Long id) {
+		Bus bus = getBusById(id);
 
-		int updated = busRepository.deactivateBus(id);
+		// Toggle status instead of just deactivating
+		bus.setIsActive(!bus.getIsActive());
 
-		if (updated == 0) {
-			throw new RuntimeException("Bus not found or already inactive");
-		}
-
-		return getBusById(id);
-
+		return busRepository.save(bus);
 	}
 
 }

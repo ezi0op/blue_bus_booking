@@ -13,10 +13,12 @@ import com.bluebus.booking.entity.Payment;
 import com.bluebus.booking.service.EmailService;
 
 import jakarta.mail.internet.MimeMessage;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
+@Transactional
 public class EmailServiceImpl implements EmailService {
 
 	@Autowired
@@ -62,59 +64,59 @@ public class EmailServiceImpl implements EmailService {
 
 	@Override
 	@Async
-	public void sendPaymentSuccess(Booking booking, Payment payment) {
+	public void sendPaymentSuccess(String toEmail, String bookingRef, String paymentId, java.math.BigDecimal amount) {
 		String subject = "Payment Successful ✅ - Seat Confirmed";
 		String content = "<h2 style='color: #16a34a;'>Payment Successful!</h2>"
 				+ "<p>Great news! Your payment has been processed and your journey is confirmed.</p>"
 				+ "<div style='background-color: #f3f4f6; padding: 15px; border-radius: 10px; margin: 20px 0;'>"
-				+ "  <p><strong>Booking ID:</strong> #" + booking.getBookingReference() + "</p>"
-				+ "  <p><strong>Payment ID:</strong> " + payment.getRazorpayPaymentId() + "</p>"
-				+ "  <p><strong>Amount Paid:</strong> ₹" + payment.getAmount() + "</p>"
+				+ "  <p><strong>Booking ID:</strong> #" + bookingRef + "</p>"
+				+ "  <p><strong>Payment ID:</strong> " + paymentId + "</p>"
+				+ "  <p><strong>Amount Paid:</strong> ₹" + amount + "</p>"
 				+ "  <p><strong>Status:</strong> <span style='color: #16a34a; font-weight: bold;'>CONFIRMED</span></p>"
 				+ "</div>"
 				+ "<p>You can download your ticket and invoice from the app. Safe journey!</p>";
 
-		sendHtmlEmail(booking.getContactEmail(), subject, content);
+		sendHtmlEmail(toEmail, subject, content);
 	}
 
 	@Override
 	@Async
-	public void sendPaymentFailed(Booking booking) {
+	public void sendPaymentFailed(String toEmail, String bookingRef) {
 		String subject = "Payment Failed ❌ - Action Required";
 		String content = "<h2 style='color: #dc2626;'>Payment Failed</h2>"
-				+ "<p>We were unable to process your payment for booking <strong>#" + booking.getBookingReference() + "</strong>.</p>"
+				+ "<p>We were unable to process your payment for booking <strong>#" + bookingRef + "</strong>.</p>"
 				+ "<p>As a result, your booking has been automatically cancelled and your seats have been released.</p>"
 				+ "<p>Please try booking again. If money was deducted, it will be refunded automatically within 5-7 business days.</p>";
 
-		sendHtmlEmail(booking.getContactEmail(), subject, content);
+		sendHtmlEmail(toEmail, subject, content);
 	}
 
 	@Override
 	@Async
-	public void sendRefundConfirmation(Booking booking, Payment payment) {
+	public void sendRefundConfirmation(String toEmail, String bookingRef, java.math.BigDecimal amount, String reason) {
 		String subject = "Refund Processed 💰";
 		String content = "<h2>Refund Initiated</h2>"
-				+ "<p>Your refund for booking <strong>#" + booking.getBookingReference() + "</strong> has been initiated.</p>"
+				+ "<p>Your refund for booking <strong>#" + bookingRef + "</strong> has been initiated.</p>"
 				+ "<div style='background-color: #f3f4f6; padding: 15px; border-radius: 10px; margin: 20px 0;'>"
-				+ "  <p><strong>Refund Amount:</strong> ₹" + payment.getRefundedAmount() + "</p>"
-				+ "  <p><strong>Reason:</strong> " + payment.getRefundReason() + "</p>"
+				+ "  <p><strong>Refund Amount:</strong> ₹" + amount + "</p>"
+				+ "  <p><strong>Reason:</strong> " + reason + "</p>"
 				+ "</div>"
 				+ "<p>The amount will reflect in your original payment method within 5–7 business days.</p>";
 
-		sendHtmlEmail(booking.getContactEmail(), subject, content);
+		sendHtmlEmail(toEmail, subject, content);
 	}
 
 	@Override
 	@Async
-	public void sendBookingCancellation(Booking booking) {
+	public void sendBookingCancellation(String contactEmail, String bookingReference, String source, String destination, String journeyDate) {
 		String subject = "Booking Cancelled 🚫";
 		String content = "<h2>Booking Cancelled</h2>"
-				+ "<p>Your booking <strong>#" + booking.getBookingReference() + "</strong> has been successfully cancelled.</p>"
-				+ "<p>Route: " + booking.getTrip().getRoute().getSource() + " → " + booking.getTrip().getRoute().getDestination() + "</p>"
-				+ "<p>Date: " + booking.getTrip().getJourneyDate() + "</p>"
+				+ "<p>Your booking <strong>#" + bookingReference + "</strong> has been successfully cancelled.</p>"
+				+ "<p>Route: " + source + " → " + destination + "</p>"
+				+ "<p>Date: " + journeyDate + "</p>"
 				+ "<p>We hope to see you again soon!</p>";
 
-		sendHtmlEmail(booking.getContactEmail(), subject, content);
+		sendHtmlEmail(contactEmail, subject, content);
 	}
 
 	@Override

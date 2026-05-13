@@ -1,6 +1,7 @@
 package com.bluebus.booking.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import lombok.Data;
@@ -18,5 +19,5 @@ public class CouponRequestDTO {
 
 	private Boolean isActive;
 
-	private LocalDateTime expiryDate;
+	private LocalDate expiryDate;
 }

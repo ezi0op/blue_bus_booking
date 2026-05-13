@@ -9,13 +9,13 @@ public interface EmailService {
 
 	void sendBookingConfirmation(Booking booking);
 
-	void sendPaymentSuccess(Booking booking, Payment payment);
+	void sendPaymentSuccess(String toEmail, String bookingRef, String paymentId, java.math.BigDecimal amount);
 
-	void sendPaymentFailed(Booking booking);
+	void sendPaymentFailed(String toEmail, String bookingRef);
 
-	void sendRefundConfirmation(Booking booking, Payment payment);
+	void sendRefundConfirmation(String toEmail, String bookingRef, java.math.BigDecimal amount, String reason);
 
-	void sendBookingCancellation(Booking booking);
+	void sendBookingCancellation(String contactEmail, String bookingReference, String source, String destination, String journeyDate);
 
 	void sendChatNotificationEmail(String toEmail, String subject, String body);
 

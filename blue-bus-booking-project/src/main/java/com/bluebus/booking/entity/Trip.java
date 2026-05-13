@@ -73,7 +73,6 @@ public class Trip {
 	private LocalDate journeyDate;
 
 	@NotNull
-	@Future(message = "Departure time must be in future")
 	@Column(nullable = false)
 	private LocalTime departureTime;
 
