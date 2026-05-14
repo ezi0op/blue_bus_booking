@@ -27,6 +27,9 @@ public class EmailServiceImpl implements EmailService {
 	@Value("${spring.mail.username}")
 	private String fromEmail;
 
+	@Value("${app.frontend.url}")
+	private String frontendUrl;
+
 	@Override
 	@Async
 	public void sendWelcomeEmail(String toEmail, String userName) {
@@ -40,7 +43,7 @@ public class EmailServiceImpl implements EmailService {
 				+ "  <li>Manage your bookings anywhere, anytime</li>"
 				+ "</ul>"
 				+ "<div style='text-align: center; margin-top: 30px;'>"
-				+ "  <a href='http://localhost:5173/' style='background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;'>Start Booking Now</a>"
+				+ "  <a href='" + frontendUrl + "/' style='background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;'>Start Booking Now</a>"
 				+ "</div>";
 
 		sendHtmlEmail(toEmail, subject, content);
@@ -181,7 +184,7 @@ public class EmailServiceImpl implements EmailService {
 	@Async
 	public void sendVerificationEmail(String toEmail, String token) {
 		String subject = "Verify Your Account - Blue Bus Booking 🛡️";
-		String verificationLink = "http://localhost:5173/verify/" + token;
+		String verificationLink = frontendUrl + "/verify/" + token;
 		
 		String content = "<h2>Almost there!</h2>"
 				+ "<p>Thank you for signing up with <strong>Blue Bus Booking</strong>. Please click the button below to verify your email address and activate your account:</p>"
