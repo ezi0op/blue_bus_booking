@@ -15,6 +15,16 @@ const PaymentSuccess = () => {
   const [viewMode, setViewMode] = useState('ticket'); // 'ticket' or 'invoice'
 
   useEffect(() => {
+    // 🔥 Cleanup booking state only on success
+    localStorage.removeItem('pendingBooking');
+    localStorage.removeItem('lastSelectedTripId');
+    // Clear any temporary booking forms
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('bookingForm_')) {
+        localStorage.removeItem(key);
+      }
+    });
+
     const fetchBookingDetails = async () => {
       const token = localStorage.getItem('token');
       try {
@@ -185,7 +195,7 @@ const PaymentSuccess = () => {
             {/* Navigation Footer */}
             <div className="pt-8 border-t border-gray-50 flex flex-col sm:flex-row items-center justify-between gap-6">
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/', { replace: true })}
                 className="flex items-center gap-2 text-gray-500 font-bold hover:text-blue-600 transition-colors"
               >
                 <Home size={18} />
@@ -193,7 +203,7 @@ const PaymentSuccess = () => {
               </button>
 
               <button
-                onClick={() => navigate('/bookings')}
+                onClick={() => navigate('/bookings', { replace: true })}
                 className="flex items-center gap-2 text-blue-600 font-black hover:gap-4 transition-all"
               >
                 Manage Bookings

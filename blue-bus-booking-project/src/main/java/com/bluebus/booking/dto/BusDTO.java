@@ -19,5 +19,6 @@ public class BusDTO {
 	private Integer totalSeats;
 	private Long operatorId;
 	private String operatorName;
+	private String image;
 	private Boolean isActive;
 }

@@ -27,11 +27,11 @@ import AdminBooking from './Components/AdminDashBoard/AdminBooking';
 
 const App = () => {
   React.useEffect(() => {
-    // Clear transient data only on full page refresh or logo click (full reload)
-    // This allows data to persist during internal React navigation (like Login redirect)
-    const transientDataKeys = ['lastSearch', 'pendingBooking', 'chatHistory', 'chatSessionId'];
+    // 🔥 Clear transient data on Hard Refresh (F5) to ensure a clean session start
+    // This will NOT run during internal React navigation (like clicking 'Offers' or 'Login')
+    const transientDataKeys = ['lastSearch', 'pendingBooking', 'chatHistory', 'chatSessionId', 'lastSelectedTripId'];
     
-    // Check if we just logged in (we want to keep data in that case)
+    // Skip cleanup if we just logged in (redirect from Login)
     const justLoggedIn = sessionStorage.getItem('justLoggedIn');
     if (justLoggedIn) {
       sessionStorage.removeItem('justLoggedIn');

@@ -71,11 +71,13 @@ public class BusServiceImpl implements BusService {
 		}
 
 		if (updatedBus.getOperator() != null && updatedBus.getOperator().getId() != null) {
-
 			BusOperator operator = busOperatorRepository.findById(updatedBus.getOperator().getId())
 					.orElseThrow(() -> new RuntimeException("Operator not found"));
-
 			existing.setOperator(operator);
+		}
+
+		if (updatedBus.getImage() != null) {
+			existing.setImage(updatedBus.getImage());
 		}
 
 		return busRepository.save(existing);

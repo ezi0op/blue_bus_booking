@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bluebus.booking.dto.TripSearchRequest;
 import com.bluebus.booking.dto.enums.BookingStatus;
+import com.bluebus.booking.dto.enums.BusType;
 import com.bluebus.booking.dto.enums.TripStatus;
 import com.bluebus.booking.entity.Booking;
 import com.bluebus.booking.entity.Bus;
@@ -18,6 +19,8 @@ import com.bluebus.booking.entity.Trip;
 import com.bluebus.booking.repository.BookingRepository;
 import com.bluebus.booking.repository.BusRepository;
 import com.bluebus.booking.repository.RouteRepository;
+import com.bluebus.booking.repository.SeatAvailabilityRepository;
+import com.bluebus.booking.repository.SeatRepository;
 import com.bluebus.booking.repository.TripRepository;
 import com.bluebus.booking.service.EmailService;
 import com.bluebus.booking.service.PaymentService;
@@ -43,11 +46,18 @@ public class TripServiceImpl implements TripService {
 
 	@Autowired
 	private BookingRepository bookingRepository;
+	
+	@Autowired
+	private SeatRepository seatRepository;
+
+	@Autowired
+	private SeatAvailabilityRepository seatAvailabilityRepository;
 
 	@Autowired
 	private PaymentService paymentService;
 
 	@Override
+	@Transactional
 	public Trip createTrip(Trip trip) {
 
 		if (trip.getRoute() == null || trip.getRoute().getId() == null) {
@@ -64,15 +74,90 @@ public class TripServiceImpl implements TripService {
 
 		trip.setRoute(route);
 		trip.setBus(bus);
+		
+		if (trip.getPrice() == null || trip.getPrice().compareTo(java.math.BigDecimal.ZERO) == 0) {
+			trip.setPrice(calculateFare(route.getDistance(), bus.getBusType()));
+		}
+
 		if (trip.getStatus() == null) {
 			trip.setStatus(TripStatus.SCHEDULED);
 		}
-		if (trip.getTotalSeats() == null) {
+		if (trip.getTotalSeats() == null || trip.getTotalSeats() == 0) {
 			trip.setTotalSeats(bus.getTotalSeats());
 		}
 		trip.setBookedSeats(0);
 		trip.setAvailableSeats(trip.getTotalSeats());
-		return tripRepository.save(trip);
+		
+		Trip savedTrip = tripRepository.save(trip);
+		initializeSeatsAndAvailability(savedTrip);
+		return savedTrip;
+	}
+
+	private void initializeSeatsAndAvailability(Trip trip) {
+		Bus bus = trip.getBus();
+		List<com.bluebus.booking.entity.Seat> seatsToUse = new java.util.ArrayList<>(seatRepository.findByBusIdAndIsActiveTrue(bus.getId()));
+		
+		if (seatsToUse.isEmpty()) {
+			int total = trip.getTotalSeats();
+			boolean isSleeper = bus.getBusType() == BusType.SLEEPER || bus.getBusType() == BusType.VOLVO;
+			int cols = isSleeper ? 3 : 4;
+			
+			// For sleepers, we split seats between Lower and Upper decks
+			int seatsPerDeck = isSleeper ? (total / 2) : total;
+			
+			for (int i = 0; i < total; i++) {
+				boolean isUpper = isSleeper && (i >= seatsPerDeck);
+				int localIdx = isUpper ? (i - seatsPerDeck) : i;
+				
+				int row = (localIdx / cols) + 1;
+				int col = (localIdx % cols) + 1;
+				
+				String deckPrefix = isSleeper ? (isUpper ? "U" : "L") : "L";
+				String seatNum = String.format("%s%d%c", deckPrefix, row, (char)('A' + (col - 1)));
+				
+				com.bluebus.booking.entity.Seat seat = com.bluebus.booking.entity.Seat.builder()
+						.bus(bus)
+						.seatNumber(seatNum)
+						.rowNumber(row)
+						.columnNumber(col)
+						.seatType(isSleeper ? com.bluebus.booking.dto.enums.BusSeatType.SLEEPER : com.bluebus.booking.dto.enums.BusSeatType.SEATER)
+						.isActive(true)
+						.build();
+				seatsToUse.add(seatRepository.save(seat));
+			}
+		}
+		
+		List<com.bluebus.booking.entity.SeatAvailability> availabilities = new java.util.ArrayList<>();
+		for (com.bluebus.booking.entity.Seat s : seatsToUse) {
+			if (availabilities.size() >= trip.getTotalSeats()) break;
+			
+			availabilities.add(com.bluebus.booking.entity.SeatAvailability.builder()
+					.trip(trip)
+					.seat(s)
+					.isBooked(false)
+					.isLocked(false)
+					.build());
+		}
+		seatAvailabilityRepository.saveAll(availabilities);
+	}
+
+	private java.math.BigDecimal calculateFare(Double distance, BusType type) {
+		double baseRate = 2.5; // Base price per KM
+		double multiplier = 1.0;
+
+		switch (type) {
+			case AC: multiplier = 1.3; break;
+			case SLEEPER: multiplier = 1.6; break;
+			case SEMI_SLEEPER: multiplier = 1.4; break;
+			case VOLVO: multiplier = 2.0; break;
+			case ELECTRIC: multiplier = 1.2; break;
+			case NON_AC: multiplier = 1.0; break;
+			case SEATER: multiplier = 1.0; break;
+			default: multiplier = 1.0;
+		}
+
+		double calculated = distance * baseRate * multiplier;
+		return java.math.BigDecimal.valueOf(calculated).setScale(2, java.math.RoundingMode.HALF_UP);
 	}
 
 	@Override
@@ -132,8 +217,14 @@ public class TripServiceImpl implements TripService {
 	public List<Trip> searchTrips(TripSearchRequest req, int page, int size, String sortBy, String direction) {
 
 		List<Trip> trips = tripRepository
-				.findByRoute_SourceIgnoreCaseAndRoute_DestinationIgnoreCaseAndJourneyDateAndStatus(
+				.findByRoute_SourceIgnoreCaseAndRoute_DestinationIgnoreCaseAndJourneyDateGreaterThanEqualAndStatus(
 						req.getSource().trim(), req.getDestination().trim(), req.getDate(), TripStatus.SCHEDULED);
+
+		// 🔥 FILTER: Only show trips that haven't departed yet
+		trips = trips.stream().filter(t -> {
+			LocalDateTime departureDateTime = LocalDateTime.of(t.getJourneyDate(), t.getDepartureTime());
+			return departureDateTime.isAfter(LocalDateTime.now());
+		}).toList();
 
 		// 🔥 FILTERS (same as before)
 		if (req.getMinPrice() != null) {

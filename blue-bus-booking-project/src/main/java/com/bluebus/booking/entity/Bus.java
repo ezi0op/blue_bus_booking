@@ -58,6 +58,9 @@ public class Bus {
 	@Column(nullable = false)
 	private Integer totalSeats;
 
+	@Column(length = 1000)
+	private String image;
+
 	@Builder.Default
 	@Column(nullable = false)
 	private Boolean isActive = true;

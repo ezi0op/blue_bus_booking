@@ -49,7 +49,8 @@ public class AdminRouteController {
 	// 🔁 MAPPER
 	private RouteDTO mapToDTO(Route route) {
 		return RouteDTO.builder().id(route.getId()).source(route.getSource()).destination(route.getDestination())
-				.distance(route.getDistance()).duration(route.getDuration()).isActive(route.getIsActive()).build();
+				.distance(route.getDistance()).duration(route.getDuration()).image(route.getImage())
+				.isActive(route.getIsActive()).build();
 	}
 
 }

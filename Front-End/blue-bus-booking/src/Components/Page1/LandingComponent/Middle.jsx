@@ -34,8 +34,8 @@ const Middle = () => {
       setTo(savedTo);
       setDate(savedDate);
 
-      // If we have a pending booking, we must re-trigger the search to show results
-      if (pending) {
+      // If we have a pending booking or just a selected trip, we must re-trigger the search to show results
+      if (pending || localStorage.getItem('lastSelectedTripId')) {
         const performRestore = async () => {
           setLoading(true);
           try {
@@ -46,10 +46,15 @@ const Middle = () => {
             });
             setSearchResults(response.data.data || []);
             
-            const { tripId } = JSON.parse(pending);
-            setSelectedTripId(Number(tripId));
+            const savedTripId = localStorage.getItem('lastSelectedTripId');
+            if (savedTripId) {
+              setSelectedTripId(Number(savedTripId));
+            } else if (pending) {
+              const { tripId } = JSON.parse(pending);
+              setSelectedTripId(Number(tripId));
+            }
           } catch (err) {
-            // Error restoring search silently
+            console.error('Error restoring search:', err);
           } finally {
             setLoading(false);
           }
@@ -213,7 +218,13 @@ const Middle = () => {
                 <label className="text-sm font-semibold text-gray-600">Date</label>
                 <div className="relative">
                   <CalendarDays size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
+                  <input 
+                    type="date" 
+                    value={date} 
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setDate(e.target.value)} 
+                    className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" 
+                  />
                 </div>
               </div>
 
@@ -249,7 +260,18 @@ const Middle = () => {
                   <div className="flex flex-col gap-6">
                     {searchResults.map((trip) => (
                       <React.Fragment key={trip.id}>
-                        <TripResultCard trip={trip} isSelected={selectedTripId === trip.id} onToggleSeats={() => setSelectedTripId(selectedTripId === trip.id ? null : trip.id)} isStopsExpanded={expandedStopsTripId === trip.id} onToggleStops={() => toggleStops(trip)} />
+                        <TripResultCard 
+                          trip={trip} 
+                          isSelected={selectedTripId === trip.id} 
+                          onToggleSeats={() => {
+                            const nextId = selectedTripId === trip.id ? null : trip.id;
+                            setSelectedTripId(nextId);
+                            if (nextId) localStorage.setItem('lastSelectedTripId', nextId);
+                            else localStorage.removeItem('lastSelectedTripId');
+                          }} 
+                          isStopsExpanded={expandedStopsTripId === trip.id} 
+                          onToggleStops={() => toggleStops(trip)} 
+                        />
                         {expandedStopsTripId === trip.id && (
                           <div className="mt-[-1rem] bg-slate-50 p-6 pt-10 rounded-b-2xl border-x border-b border-gray-100 animate-in slide-in-from-top-2 duration-300">
                             <div className="flex items-center justify-between mb-6">

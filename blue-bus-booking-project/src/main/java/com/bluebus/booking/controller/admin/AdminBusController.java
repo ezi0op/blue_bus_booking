@@ -51,6 +51,6 @@ public class AdminBusController {
 	private BusDTO mapToDTO(Bus bus) {
 		return BusDTO.builder().id(bus.getId()).busNumber(bus.getBusNumber()).busType(bus.getBusType())
 				.totalSeats(bus.getTotalSeats()).operatorId(bus.getOperator().getId())
-				.operatorName(bus.getOperator().getName()).isActive(bus.getIsActive()).build();
+				.operatorName(bus.getOperator().getName()).image(bus.getImage()).isActive(bus.getIsActive()).build();
 	}
 }

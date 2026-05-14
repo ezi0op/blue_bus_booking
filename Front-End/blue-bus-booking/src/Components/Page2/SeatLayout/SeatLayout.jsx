@@ -40,8 +40,12 @@ const SeatLayout = ({ tripId, price, onClose }) => {
           const { tripId: pendingTripId, selectedSeats: pendingSeats } = JSON.parse(pending);
           if (Number(pendingTripId) === Number(tripId) && Array.isArray(pendingSeats)) {
             setSelectedSeats(pendingSeats);
-            // Clear it so it doesn't persist forever
-            localStorage.removeItem('pendingBooking');
+            
+            // If there's a saved form, jump straight to the booking step
+            const savedForm = localStorage.getItem(`bookingForm_${tripId}`);
+            if (savedForm) {
+              setStep('BOOKING');
+            }
           }
         } catch (e) {
           // Silent error for parsing
@@ -70,8 +74,9 @@ const SeatLayout = ({ tripId, price, onClose }) => {
     if (seat.isBooked) return;
     const isAlreadySelected = selectedSeats.find(s => s.seatNumber === seat.seatNumber);
 
+    let newSelection;
     if (isAlreadySelected) {
-      setSelectedSeats(selectedSeats.filter(s => s.seatNumber !== seat.seatNumber));
+      newSelection = selectedSeats.filter(s => s.seatNumber !== seat.seatNumber);
       setMaxSeatError(false);
     } else {
       // Limit to max 6 seats per booking
@@ -79,11 +84,21 @@ const SeatLayout = ({ tripId, price, onClose }) => {
         setMaxSeatError(true);
         return;
       }
-      // Store necessary info: ID (check multiple keys as backend naming might vary)
-      // PRIORITY: We need the physical Seat ID (seatId) for the booking API findByTripIdAndSeatId
       const id = seat.seatId || seat.id || seat.availabilityId || (seat.seat && seat.seat.id);
-      setSelectedSeats([...selectedSeats, { seatId: id, seatNumber: seat.seatNumber }]);
+      newSelection = [...selectedSeats, { seatId: id, seatNumber: seat.seatNumber }];
       setMaxSeatError(false);
+    }
+    
+    setSelectedSeats(newSelection);
+    
+    // Save selection immediately so it survives navigation to /offers
+    if (newSelection.length > 0) {
+      localStorage.setItem('pendingBooking', JSON.stringify({
+        tripId,
+        selectedSeats: newSelection
+      }));
+    } else {
+      localStorage.removeItem('pendingBooking');
     }
   };
 

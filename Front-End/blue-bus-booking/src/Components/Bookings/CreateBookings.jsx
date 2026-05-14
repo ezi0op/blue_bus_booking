@@ -27,22 +27,40 @@ const CreateBookings = ({ tripId, price, selectedSeats, onBack, onRemoveSeat }) 
   const [passengerData, setPassengerData] = useState([]);
 
   useEffect(() => {
-    setPassengerData(prev => {
-      const existingMap = new Map(prev.map(p => [p.seatNumber, p]));
-      return selectedSeats.map(seat => {
-        if (existingMap.has(seat.seatNumber)) {
-          return existingMap.get(seat.seatNumber);
-        }
-        return {
-          seatId: seat.seatId,
-          seatNumber: seat.seatNumber,
-          name: '',
-          age: '',
-          gender: 'MALE'
-        };
+    // Restore saved form data if it belongs to this trip
+    const savedForm = localStorage.getItem(`bookingForm_${tripId}`);
+    if (savedForm) {
+      const { passengerData: savedP, contactInfo: savedC } = JSON.parse(savedForm);
+      setPassengerData(savedP);
+      setContactInfo(savedC);
+    } else {
+      setPassengerData(prev => {
+        const existingMap = new Map(prev.map(p => [p.seatNumber, p]));
+        return selectedSeats.map(seat => {
+          if (existingMap.has(seat.seatNumber)) {
+            return existingMap.get(seat.seatNumber);
+          }
+          return {
+            seatId: seat.seatId,
+            seatNumber: seat.seatNumber,
+            name: '',
+            age: '',
+            gender: 'MALE'
+          };
+        });
       });
-    });
-  }, [selectedSeats]);
+    }
+  }, [selectedSeats, tripId]);
+
+  // Save form data whenever it changes
+  useEffect(() => {
+    if (passengerData.length > 0) {
+      localStorage.setItem(`bookingForm_${tripId}`, JSON.stringify({
+        passengerData,
+        contactInfo
+      }));
+    }
+  }, [passengerData, contactInfo, tripId]);
 
   const handleContactChange = (e) => {
     let { name, value } = e.target;
@@ -114,7 +132,10 @@ const CreateBookings = ({ tripId, price, selectedSeats, onBack, onRemoveSeat }) 
             }, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            navigate(`/payment-success/${bookingId}`);
+            localStorage.removeItem('pendingBooking');
+            localStorage.removeItem('lastSearch');
+            localStorage.removeItem('lastSelectedTripId');
+            navigate(`/payment-success/${bookingId}`, { replace: true });
           } catch (err) {
             setError('Failed to confirm offline payment.');
             setLoading(false);
@@ -128,7 +149,10 @@ const CreateBookings = ({ tripId, price, selectedSeats, onBack, onRemoveSeat }) 
             userPhone: contactInfo.contactPhone,
             paymentMethod: paymentMethod,
             onSuccess: (data) => {
-              navigate(`/payment-success/${bookingId}`);
+              localStorage.removeItem('pendingBooking');
+              localStorage.removeItem('lastSearch');
+              localStorage.removeItem('lastSelectedTripId');
+              navigate(`/payment-success/${bookingId}`, { replace: true });
             },
             onError: (errorMessage) => {
               setError(errorMessage);
@@ -141,7 +165,9 @@ const CreateBookings = ({ tripId, price, selectedSeats, onBack, onRemoveSeat }) 
         setError(response.data.message || 'Failed to create booking.');
         setLoading(false);
       }
-        setError(detailedError || 'Error occurred while creating booking.');
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Error occurred while creating booking.');
     } finally {
       setLoading(false);
     }

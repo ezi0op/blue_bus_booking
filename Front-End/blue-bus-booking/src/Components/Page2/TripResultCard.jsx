@@ -38,7 +38,7 @@ const TripResultCard = ({
         </div>
 
         <div className="flex flex-col items-center px-4 flex-1">
-          <div className="flex items-center gap-1.5 mb-1">
+          <div className="flex items-center gap-1.5 mb-2">
             <div className="h-[2px] w-8 bg-gray-200"></div>
             <Clock size={14} className="text-gray-400" />
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
@@ -46,7 +46,15 @@ const TripResultCard = ({
             </span>
             <div className="h-[2px] w-8 bg-gray-200"></div>
           </div>
-          <Bus size={20} className="text-blue-500" />
+          <div className="relative w-24 h-16 rounded-xl overflow-hidden border border-gray-100 shadow-sm mb-2 group">
+             {trip.routeImage || trip.busImage ? (
+               <img src={trip.routeImage || trip.busImage} alt="Trip" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+             ) : (
+               <div className="w-full h-full bg-slate-50 flex items-center justify-center">
+                 <Bus size={24} className="text-blue-500" />
+               </div>
+             )}
+          </div>
           <div className="flex flex-col items-center mt-1">
             <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
               {trip.availableSeats} Seats Left

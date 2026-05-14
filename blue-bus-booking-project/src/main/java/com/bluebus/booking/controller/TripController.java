@@ -77,19 +77,15 @@ public class TripController {
 
 	// 🔁 MAPPER
 	private TripDTO mapToDTO(Trip trip) {
-		return TripDTO.builder().id(trip.getId())
-				.routeId(trip.getRoute().getId())
-				.source(trip.getRoute().getSource())
-				.destination(trip.getRoute().getDestination())
-				.busId(trip.getBus().getId())
-				.busName(trip.getBus().getBusNumber())
-				.busType(trip.getBus().getBusType())
-				.journeyDate(trip.getJourneyDate()).departureTime(trip.getDepartureTime())
-				.arrivalTime(trip.getArrivalTime()).price(trip.getPrice()).status(trip.getStatus())
-				.totalSeats(trip.getTotalSeats()).availableSeats(trip.getAvailableSeats())
+		return TripDTO.builder().id(trip.getId()).routeId(trip.getRoute().getId())
+				.source(trip.getRoute().getSource()).destination(trip.getRoute().getDestination())
+				.routeImage(trip.getRoute().getImage()).busId(trip.getBus().getId())
+				.busName(trip.getBus().getBusNumber()).busImage(trip.getBus().getImage())
+				.busType(trip.getBus().getBusType()).journeyDate(trip.getJourneyDate())
+				.departureTime(trip.getDepartureTime()).arrivalTime(trip.getArrivalTime()).price(trip.getPrice())
+				.status(trip.getStatus()).totalSeats(trip.getTotalSeats()).availableSeats(trip.getAvailableSeats())
 				.bookedSeats(trip.getBookedSeats()).rating(trip.getRating()).cancelledAt(trip.getCancelledAt())
-				.operator(mapOperatorToDTO(trip.getBus().getOperator()))
-				.build();
+				.operator(mapOperatorToDTO(trip.getBus().getOperator())).build();
 	}
 
 	private com.bluebus.booking.dto.BusOperatorDTO mapOperatorToDTO(com.bluebus.booking.entity.BusOperator op) {
@@ -97,7 +93,8 @@ public class TripController {
 			return null;
 		return com.bluebus.booking.dto.BusOperatorDTO.builder().id(op.getId()).name(op.getName())
 				.contactEmail(op.getContactEmail()).contactPhone(op.getContactPhone())
-				.licenseNumber(op.getLicenseNumber()).rating(op.getRating()).isActive(op.getIsActive()).build();
+				.licenseNumber(op.getLicenseNumber()).rating(op.getRating()).image(op.getImage())
+				.isActive(op.getIsActive()).build();
 	}
 
 }

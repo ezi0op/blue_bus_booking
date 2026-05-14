@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   Bus, Plus, Edit2, Power, 
-  PowerOff, Landmark, X, Check
+  PowerOff, Landmark, X, Check, Image as ImageIcon
 } from 'lucide-react';
 
 const AdminBus = () => {
@@ -14,14 +14,30 @@ const AdminBus = () => {
     busNumber: '',
     busType: '',
     totalSeats: 0,
-    operator: { id: '' }
+    operator: { id: '' },
+    image: ''
   });
-
   const [notification, setNotification] = useState(null);
+  const [operators, setOperators] = useState([]);
+  const [fetchingOptions, setFetchingOptions] = useState(false);
 
   useEffect(() => {
     fetchBuses();
   }, []);
+
+  const fetchOptions = async () => {
+    const token = localStorage.getItem('token');
+    const headers = { Authorization: `Bearer ${token}` };
+    setFetchingOptions(true);
+    try {
+      const res = await axios.get('http://localhost:8080/api/operators', { headers });
+      setOperators(res.data.data || []);
+    } catch (err) {
+      console.error('Error fetching operators:', err);
+    } finally {
+      setFetchingOptions(false);
+    }
+  };
 
   const showMessage = (msg, type = 'error') => {
     setNotification({ msg, type });
@@ -96,7 +112,7 @@ const AdminBus = () => {
         </div>
 
         <button 
-          onClick={() => { setEditingItem(null); setFormData({ busNumber: '', busType: '', totalSeats: 0, operator: { id: '' } }); setShowModal(true); }}
+          onClick={() => { setEditingItem(null); setFormData({ busNumber: '', busType: '', totalSeats: 0, operator: { id: '' }, image: '' }); fetchOptions(); setShowModal(true); }}
           className="flex items-center gap-2 px-6 py-3.5 bg-[#0d2694] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all shadow-lg shadow-blue-900/20"
         >
           <Plus size={18} /> Add New Bus
@@ -112,8 +128,12 @@ const AdminBus = () => {
           buses.map((bus) => (
             <div key={bus.id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group overflow-hidden">
               <div className="flex justify-between items-start mb-6">
-                <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl group-hover:scale-110 transition-transform">
-                  <Bus size={28} />
+                <div className="w-20 h-20 bg-blue-50 rounded-2xl group-hover:scale-110 transition-transform overflow-hidden border border-blue-100 flex items-center justify-center">
+                  {bus.image ? (
+                    <img src={bus.image} alt="Bus" className="w-full h-full object-cover" />
+                  ) : (
+                    <Bus size={28} className="text-blue-600" />
+                  )}
                 </div>
                 <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${bus.isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
                   {bus.isActive ? 'Active' : 'Deactivated'}
@@ -129,7 +149,7 @@ const AdminBus = () => {
               </div>
 
               <div className="flex gap-2">
-                <button onClick={() => { setEditingItem(bus); setFormData(bus); setShowModal(true); }} className="flex-1 py-3 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-50 transition-all">Edit Unit</button>
+                <button onClick={() => { setEditingItem(bus); setFormData(bus); fetchOptions(); setShowModal(true); }} className="flex-1 py-3 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-50 transition-all">Edit Unit</button>
                 <button onClick={() => handleToggleStatus(bus.id)} className={`p-3 rounded-xl transition-all ${bus.isActive ? 'bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white' : 'bg-emerald-50 text-emerald-500 hover:bg-emerald-500 hover:text-white'}`}>{bus.isActive ? <PowerOff size={18} /> : <Power size={18} />}</button>
               </div>
             </div>
@@ -169,8 +189,31 @@ const AdminBus = () => {
                   <input required type="number" value={formData.totalSeats} onChange={(e) => setFormData({...formData, totalSeats: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none font-bold text-sm" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Operator ID</label>
-                  <input required type="number" value={formData.operator?.id || ''} onChange={(e) => setFormData({...formData, operator: {id: e.target.value}})} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none font-bold text-sm" />
+                  <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Assigned Operator</label>
+                  <select 
+                    required 
+                    value={formData.operator?.id || ''} 
+                    onChange={(e) => setFormData({...formData, operator: {id: e.target.value}})} 
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none font-bold text-sm"
+                  >
+                    <option value="">{fetchingOptions ? 'Loading Operators...' : 'Select Operator'}</option>
+                    {operators.map(op => (
+                      <option key={op.id} value={op.id}>{op.operatorName} ({op.contactEmail})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-1.5 mt-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Bus Image URL</label>
+                <div className="relative">
+                  <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <input 
+                    type="url" 
+                    placeholder="https://images.unsplash.com/photo..." 
+                    value={formData.image || ''} 
+                    onChange={(e) => setFormData({...formData, image: e.target.value})} 
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" 
+                  />
                 </div>
               </div>
               <div className="pt-6 flex gap-4">

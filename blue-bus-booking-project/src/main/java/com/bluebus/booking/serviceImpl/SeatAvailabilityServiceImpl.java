@@ -98,7 +98,6 @@ public class SeatAvailabilityServiceImpl implements SeatAvailabilityService {
 
 	@Override
 	public List<List<SeatLayoutDTO>> getSeatLayout(Long tripId) {
-		System.out.println("--- DEBUG: FETCHING LAYOUT FOR TRIP " + tripId + " ---");
 		List<SeatAvailability> seats = seatAvailabilityRepository.findByTripId(tripId);
 
 		Map<Integer, List<SeatLayoutDTO>> map = new TreeMap<>();
@@ -107,15 +106,20 @@ public class SeatAvailabilityServiceImpl implements SeatAvailabilityService {
 
 			int row = s.getSeat().getRowNumber();
 
+			String sNum = s.getSeat().getSeatNumber();
+			com.bluebus.booking.dto.enums.DeckType deck = sNum.startsWith("U") 
+					? com.bluebus.booking.dto.enums.DeckType.UPPER 
+					: com.bluebus.booking.dto.enums.DeckType.LOWER;
+
 			SeatLayoutDTO dto = SeatLayoutDTO.builder()
 					.id(s.getId())
 					.seatId(s.getSeat().getId())
-					.seatNumber(s.getSeat().getSeatNumber())
+					.seatNumber(sNum)
 					.isBooked(s.getIsBooked())
 					.seatType(s.getSeat().getSeatType().name())
 					.rowNumber(s.getSeat().getRowNumber())
 					.columnNumber(s.getSeat().getColumnNumber())
-					.testField("UPDATED")
+					.deckType(deck)
 					.build();
 
 			map.computeIfAbsent(row, k -> new ArrayList<>()).add(dto);

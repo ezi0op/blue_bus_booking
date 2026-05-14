@@ -65,6 +65,10 @@ public class RouteServiceImpl implements RouteService {
 			existing.setDuration(updatedRoute.getDuration());
 		}
 
+		if (updatedRoute.getImage() != null) {
+			existing.setImage(updatedRoute.getImage());
+		}
+
 		return routeRepository.save(existing);
 	}
 

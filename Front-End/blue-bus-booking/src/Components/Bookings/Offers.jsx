@@ -24,7 +24,7 @@ const Offers = () => {
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <button 
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold mb-8 transition-colors"

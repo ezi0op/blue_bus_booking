@@ -69,7 +69,15 @@ const LogIn = () => {
             if (userRole === 'ADMIN') {
               navigate('/admin'); 
             } else {
-              navigate('/');
+              // Check if there's a pending booking to resume
+              const pendingBooking = localStorage.getItem('pendingBooking');
+              if (pendingBooking) {
+                // If they have a pending booking, stay on/go to home 
+                // (where the search results usually are)
+                navigate('/');
+              } else {
+                navigate('/');
+              }
             }
           }
         } catch (fetchError) {

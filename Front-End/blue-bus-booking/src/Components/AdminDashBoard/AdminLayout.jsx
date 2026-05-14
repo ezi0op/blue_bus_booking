@@ -64,30 +64,30 @@ const AdminLayout = () => {
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto custom-scrollbar">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/admin'}
-              onClick={() => setIsMobileOpen(false)}
-              className={({ isActive }) => `
-                flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group
-                ${isActive 
-                  ? 'bg-white/15 text-white shadow-lg shadow-black/10 backdrop-blur-md border border-white/10' 
-                  : 'text-white/60 hover:text-white hover:bg-white/5'}
-              `}
-            >
-              {({ isActive }) => (
-                <>
-                  <div className="shrink-0">{item.icon}</div>
-                  {!isCollapsed && <span className="font-bold text-sm">{item.label}</span>}
-                  {!isCollapsed && isActive && (
-                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400"></div>
-                  )}
-                </>
-              )}
-            </NavLink>
-          ))}
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path));
+            return (
+              <div
+                key={item.path}
+                onClick={() => {
+                  navigate(item.path);
+                  setIsMobileOpen(false);
+                }}
+                className={`
+                  flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group cursor-pointer
+                  ${isActive 
+                    ? 'bg-white/15 text-white shadow-lg shadow-black/10 backdrop-blur-md border border-white/10' 
+                    : 'text-white/60 hover:text-white hover:bg-white/5'}
+                `}
+              >
+                <div className="shrink-0">{item.icon}</div>
+                {!isCollapsed && <span className="font-bold text-sm">{item.label}</span>}
+                {!isCollapsed && isActive && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {/* Bottom Actions */}

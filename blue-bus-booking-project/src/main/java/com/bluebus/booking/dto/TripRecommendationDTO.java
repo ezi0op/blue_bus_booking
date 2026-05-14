@@ -22,6 +22,8 @@ public class TripRecommendationDTO {
     private String journeyDate;
     private String arrivalTime;
     private String departureTime;
+    private String routeImage;
+    private String busImage;
    
     private int availableSeats;
     private String recommendationReason;

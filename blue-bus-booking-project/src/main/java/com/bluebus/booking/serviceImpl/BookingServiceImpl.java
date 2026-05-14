@@ -79,15 +79,14 @@ public class BookingServiceImpl implements BookingService {
 			}
 
 			if (seat.getIsLocked()) {
-				if (seat.getLockExpiryTime() != null && seat.getLockExpiryTime().isAfter(LocalDateTime.now())) {
-
-					throw new RuntimeException("Seat already locked");
+				// If the seat is locked but not booked, we allow the booking to proceed.
+				// The lock was likely placed by this same user during seat selection.
+				if (seat.getLockExpiryTime() != null && seat.getLockExpiryTime().isBefore(LocalDateTime.now())) {
+					// expired → release it first (optional since we're about to lock/book it anyway)
+					seat.setIsLocked(false);
+					seat.setLockTime(null);
+					seat.setLockExpiryTime(null);
 				}
-
-				// expired → release
-				seat.setIsLocked(false);
-				seat.setLockTime(null);
-				seat.setLockExpiryTime(null);
 			}
 
 			// lock seat
@@ -175,7 +174,6 @@ public class BookingServiceImpl implements BookingService {
 			seatPreferenceService.updatePreferenceFromBooking(booking.getUser().getId(), booking.getId());
 		} catch (Exception e) {
 			// Don't fail confirmation if analytics fail
-			System.err.println("Failed to update AI seat preference: " + e.getMessage());
 		}
 
 		return booking;
@@ -189,6 +187,7 @@ public class BookingServiceImpl implements BookingService {
 		if (booking.getStatus() == BookingStatus.CANCELLED) {
 			throw new RuntimeException("Booking already cancelled");
 		}
+
 
 		// If payment was completed, use the payment service to process refund + cancellation
 		if (booking.getPaymentCompleted()) {

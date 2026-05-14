@@ -4,7 +4,7 @@ import {
   CalendarClock, Plus, Edit2, X, Check,
   Calendar, Clock, AlertTriangle, Map, MapPin,
   ArrowRight, Tag, Bus as BusIcon, Info,
-  Navigation, DollarSign
+  Navigation, DollarSign, Image as ImageIcon
 } from 'lucide-react';
 
 const AdminTrip = () => {
@@ -21,10 +21,32 @@ const AdminTrip = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [selectedTripId, setSelectedTripId] = useState(null);
+  
+  const [availableRoutes, setAvailableRoutes] = useState([]);
+  const [availableBuses, setAvailableBuses] = useState([]);
+  const [fetchingOptions, setFetchingOptions] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, [view]);
+
+  const fetchOptions = async () => {
+    const token = localStorage.getItem('token');
+    const headers = { Authorization: `Bearer ${token}` };
+    setFetchingOptions(true);
+    try {
+      const [routesRes, busesRes] = await Promise.all([
+        axios.get('http://localhost:8080/api/routes', { headers }),
+        axios.get('http://localhost:8080/api/buses', { headers })
+      ]);
+      setAvailableRoutes(routesRes.data.data || []);
+      setAvailableBuses(busesRes.data.data || []);
+    } catch (err) {
+      console.error('Error fetching options:', err);
+    } finally {
+      setFetchingOptions(false);
+    }
+  };
 
   const showMessage = (msg, type = 'error') => {
     setNotification({ msg, type });
@@ -81,11 +103,8 @@ const AdminTrip = () => {
       }
       
       // Ensure arrivalTime is yyyy-MM-ddTHH:mm:ss
-      if (submissionData.arrivalTime && submissionData.journeyDate) {
-        // If it's just a time like "06:23", combine with journeyDate
-        if (!submissionData.arrivalTime.includes('T')) {
-          submissionData.arrivalTime = `${submissionData.journeyDate}T${submissionData.arrivalTime}:00`;
-        }
+      if (submissionData.arrivalTimeOnly && submissionData.arrivalDate) {
+        submissionData.arrivalTime = `${submissionData.arrivalDate}T${submissionData.arrivalTimeOnly}:00`;
       }
     }
 
@@ -171,7 +190,7 @@ const AdminTrip = () => {
         </div>
 
         <button 
-          onClick={() => { setEditingItem(null); setFormData({}); setShowModal(true); }}
+          onClick={() => { setEditingItem(null); setFormData({}); fetchOptions(); setShowModal(true); }}
           className="flex items-center gap-2 px-8 py-4 bg-[#0d2694] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all shadow-xl shadow-blue-900/20"
         >
           <Plus size={18} /> New {view === 'trips' ? 'Trip' : 'Route'}
@@ -197,13 +216,13 @@ const AdminTrip = () => {
                  <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shadow-inner">
                     <BusIcon size={28} />
                  </div>
-                 <div>
-                    <h3 className="text-lg font-black text-slate-900">{trip.source || 'Origin'}</h3>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900">{trip.route?.source || trip.source || 'Origin'}</h3>
                     <div className="flex items-center gap-2 text-slate-400">
                        <ArrowRight size={14} className="text-blue-500" />
-                       <span className="text-sm font-bold">{trip.destination || 'Destination'}</span>
+                       <span className="text-sm font-bold">{trip.route?.destination || trip.destination || 'Destination'}</span>
                     </div>
-                 </div>
+                  </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-8">
@@ -218,17 +237,42 @@ const AdminTrip = () => {
               </div>
 
               <div className="flex items-center justify-between pt-6 border-t border-slate-50">
-                 <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-100/50">
+                       <BusIcon size={14} className="text-blue-500" />
+                       <span className="text-[11px] font-black text-blue-700 tracking-tight">{trip.busName || trip.bus?.busNumber || 'UNASSIGNED'}</span>
+                       <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest ml-1">{trip.busType || trip.bus?.busType}</span>
+                    </div>
+                    <div className="flex items-center gap-3 ml-1">
+                       <div className="flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{trip.totalSeats || 0} Total</span>
+                       </div>
+                       <div className="flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                          <span className="text-[10px] font-black text-blue-500 uppercase tracking-wider">{trip.availableSeats || 0} Left</span>
+                       </div>
+                    </div>
                     <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-center ${
                       trip.status === 'SCHEDULED' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
                     }`}>
                       {trip.status}
                     </span>
-                    <span className="text-[10px] font-bold text-slate-400 ml-1">{trip.bus?.busNumber}</span>
-                 </div>
+                  </div>
                  <div className="flex gap-2">
                     <button onClick={() => { setSelectedTripId(trip.id); setShowCancelModal(true); }} className="p-3 bg-rose-50 text-rose-400 hover:text-white hover:bg-rose-500 rounded-xl transition-all shadow-sm"><AlertTriangle size={18} /></button>
-                    <button onClick={() => { setEditingItem(trip); setFormData(trip); setShowModal(true); }} className="p-3 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"><Edit2 size={18} /></button>
+                    <button onClick={() => { 
+                      const tripCopy = { ...trip };
+                      if (trip.arrivalTime) {
+                        const [date, time] = trip.arrivalTime.split('T');
+                        tripCopy.arrivalDate = date;
+                        tripCopy.arrivalTimeOnly = time.slice(0, 5);
+                      }
+                      setEditingItem(trip); 
+                      setFormData(tripCopy); 
+                      fetchOptions(); 
+                      setShowModal(true); 
+                    }} className="p-3 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"><Edit2 size={18} /></button>
                  </div>
               </div>
             </div>
@@ -277,33 +321,102 @@ const AdminTrip = () => {
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Route Connection ID</label>
-                      <input required type="number" value={formData.route?.id || ''} onChange={(e) => setFormData({...formData, route: {id: e.target.value}})} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Transit Route</label>
+                      <select 
+                        required 
+                        value={formData.route?.id || ''} 
+                        onChange={(e) => setFormData({...formData, route: {id: e.target.value}})} 
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">{fetchingOptions ? 'Loading...' : 'Select Route'}</option>
+                        {availableRoutes.map(r => (
+                          <option key={r.id} value={r.id}>{r.source} → {r.destination}</option>
+                        ))}
+                      </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Assigned Bus ID</label>
-                      <input required type="number" value={formData.bus?.id || ''} onChange={(e) => setFormData({...formData, bus: {id: e.target.value}})} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Assigned Vehicle</label>
+                      <select 
+                        required 
+                        value={formData.bus?.id || ''} 
+                        onChange={(e) => {
+                          const busId = e.target.value;
+                          const selectedBus = availableBuses.find(b => b.id.toString() === busId);
+                          setFormData({
+                            ...formData, 
+                            bus: {id: busId},
+                            totalSeats: selectedBus ? selectedBus.totalSeats : formData.totalSeats
+                          });
+                        }} 
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">{fetchingOptions ? 'Loading...' : 'Select Bus'}</option>
+                        {availableBuses.map(b => (
+                          <option key={b.id} value={b.id}>{b.busNumber} ({b.busType})</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Departure Date</label>
-                    <input required type="date" value={formData.journeyDate || ''} onChange={(e) => setFormData({...formData, journeyDate: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-                  </div>
                   <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Departure Date</label>
+                      <input 
+                        required 
+                        type="date" 
+                        min={new Date().toISOString().split('T')[0]}
+                        value={formData.journeyDate || ''} 
+                        onChange={(e) => setFormData({...formData, journeyDate: e.target.value})} 
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" 
+                      />
+                    </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">ETD (Time)</label>
                       <input required type="time" value={formData.departureTime || ''} onChange={(e) => setFormData({...formData, departureTime: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Arrival Date</label>
+                      <input 
+                        required 
+                        type="date" 
+                        min={formData.journeyDate || new Date().toISOString().split('T')[0]}
+                        value={formData.arrivalDate || ''} 
+                        onChange={(e) => setFormData({...formData, arrivalDate: e.target.value})} 
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" 
+                      />
+                    </div>
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">ETA (Time)</label>
-                      <input required type="time" value={formData.arrivalTime || ''} onChange={(e) => setFormData({...formData, arrivalTime: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input required type="time" value={formData.arrivalTimeOnly || ''} onChange={(e) => setFormData({...formData, arrivalTimeOnly: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Standard Fare (₹)</label>
-                    <div className="relative">
-                       <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                       <input required type="number" value={formData.price || ''} onChange={(e) => setFormData({...formData, price: e.target.value})} className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Standard Fare (₹)</label>
+                      <div className="relative">
+                         <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                          <input 
+                            type="number" 
+                            placeholder="Auto-calculate"
+                            value={formData.price || ''} 
+                            onChange={(e) => setFormData({...formData, price: e.target.value})} 
+                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" 
+                          />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Override Seats</label>
+                      <div className="relative">
+                         <Plus className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                          <input 
+                            type="number" 
+                            placeholder="Bus Default"
+                            value={formData.totalSeats || ''} 
+                            onChange={(e) => setFormData({...formData, totalSeats: e.target.value})} 
+                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" 
+                          />
+                      </div>
                     </div>
                   </div>
                 </>
@@ -327,6 +440,19 @@ const AdminTrip = () => {
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Duration (Min)</label>
                       <input required type="number" value={formData.duration || ''} onChange={(e) => setFormData({...formData, duration: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 mt-2">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Destination Image URL</label>
+                    <div className="relative">
+                      <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                      <input 
+                        type="url" 
+                        placeholder="https://images.unsplash.com/photo..." 
+                        value={formData.image || ''} 
+                        onChange={(e) => setFormData({...formData, image: e.target.value})} 
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500" 
+                      />
                     </div>
                   </div>
                 </>

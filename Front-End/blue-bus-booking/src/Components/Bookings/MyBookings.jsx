@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Ticket, Calendar, MapPin, User, ChevronRight, AlertCircle, ArrowLeft, Clock, CreditCard, ChevronDown, X } from 'lucide-react';
+import { Ticket, Calendar, MapPin, User, ChevronRight, AlertCircle, ArrowLeft, Clock, CreditCard, ChevronDown, X, ShieldCheck } from 'lucide-react';
 import BookingItem from './BookingItem';
 
 const MyBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [expandedBookingId, setExpandedBookingId] = useState(null);
+  const [notification, setNotification] = useState(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState(null);
   
   const navigate = useNavigate();
+
+  const showMessage = (msg, type = 'error') => {
+    setNotification({ msg, type });
+    setTimeout(() => setNotification(null), 5000);
+  };
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -34,10 +41,10 @@ const MyBookings = () => {
           );
           setBookings(sorted);
         } else {
-          setError('Failed to load your bookings.');
+          showMessage('Failed to load your bookings.');
         }
       } catch (err) {
-        setError('Error connecting to server. Please try again later.');
+        showMessage('Failed to fetch bookings. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -46,33 +53,40 @@ const MyBookings = () => {
     fetchBookings();
   }, [navigate]);
 
-  const handleCancel = async (bookingId) => {
-    if (!window.confirm('Are you sure you want to cancel this booking? Refund will be processed as per policy.')) {
-      return;
-    }
+  const [processingId, setProcessingId] = useState(null);
+
+  const triggerCancel = (bookingId) => {
+    setBookingToCancel(bookingId);
+    setShowConfirmModal(true);
+  };
+
+  const handleCancel = async () => {
+    if (!bookingToCancel) return;
+    
+    const bookingId = bookingToCancel;
+    setShowConfirmModal(false);
+    setBookingToCancel(null);
 
     const token = localStorage.getItem('token');
     try {
-      setLoading(true);
+      setProcessingId(bookingId);
       const response = await axios.put(`http://localhost:8080/api/bookings/${bookingId}/cancel`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {
-        // Refresh bookings
-        const userId = localStorage.getItem('userId');
-        const refreshResponse = await axios.get(`http://localhost:8080/api/bookings/user/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setBookings(refreshResponse.data.data || []);
-        alert('Booking cancelled and refund initiated successfully!');
+        // Update local state immediately for better UX
+        setBookings(prev => prev.map(b => 
+          b.id === bookingId ? { ...b, status: 'CANCELLED' } : b
+        ));
+        showMessage('Booking cancelled and refund initiated successfully!', 'success');
       } else {
-        setError(response.data.message || 'Failed to cancel booking.');
+        showMessage(response.data.message || 'Failed to cancel booking.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Error cancelling booking.');
+      showMessage(err.response?.data?.message || 'Error cancelling booking.');
     } finally {
-      setLoading(false);
+      setProcessingId(null);
     }
   };
 
@@ -97,7 +111,7 @@ const MyBookings = () => {
       link.click();
       link.remove();
     } catch (err) {
-      setError(`Failed to download ${type}. Please try again later.`);
+      showMessage(`Failed to download ${type}. Please try again later.`);
     }
   };
 
@@ -121,6 +135,32 @@ const MyBookings = () => {
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
+        {/* Confirmation Modal */}
+        {showConfirmModal && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowConfirmModal(false)}></div>
+            <div className="relative bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-200">
+               <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-6">
+                  <AlertCircle size={32} />
+               </div>
+               <h2 className="text-2xl font-black text-slate-900 mb-2">Cancel Booking?</h2>
+               <p className="text-sm text-slate-400 font-medium mb-8">Are you sure you want to cancel this booking? Refund will be processed as per our policy.</p>
+               
+               <div className="flex gap-4">
+                  <button onClick={() => setShowConfirmModal(false)} className="flex-1 py-4 bg-slate-50 text-slate-600 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">Go Back</button>
+                  <button onClick={handleCancel} className="flex-1 py-4 bg-rose-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-rose-600 transition-all shadow-lg shadow-rose-900/20">Confirm Cancel</button>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Notification */}
+        {notification && (
+          <div className={`fixed top-6 right-6 z-[200] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl animate-in slide-in-from-top-4 duration-300 ${notification.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+            {notification.type === 'success' ? <ShieldCheck size={20} /> : <X size={20} />}
+            <p className="text-sm font-black tracking-tight">{notification.msg}</p>
+          </div>
+        )}
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
@@ -141,14 +181,7 @@ const MyBookings = () => {
           </div>
         </div>
 
-        {error && (
-          <div className="bg-red-50 p-4 rounded-xl flex items-center gap-3 text-red-600 border border-red-100 mb-8">
-            <AlertCircle size={20} />
-            <p className="text-sm font-medium">{error}</p>
-          </div>
-        )}
-
-        {bookings.length === 0 && !error ? (
+        {bookings.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-gray-100 shadow-sm">
             <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <Ticket size={40} className="text-blue-200" />
@@ -261,12 +294,20 @@ const MyBookings = () => {
                        >
                          <CreditCard size={14} /> Invoice
                        </button>
-                       <button 
-                         onClick={() => handleCancel(booking.id)}
-                         className="text-xs font-black text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors ml-auto"
-                       >
-                         <X size={14} /> Cancel Booking
-                       </button>
+                        <button 
+                          onClick={() => triggerCancel(booking.id)}
+                          disabled={processingId === booking.id}
+                          className={`text-xs font-black flex items-center gap-1 transition-colors ml-auto ${
+                            processingId === booking.id ? 'text-gray-400 cursor-not-allowed' : 'text-red-500 hover:text-red-700'
+                          }`}
+                        >
+                          {processingId === booking.id ? (
+                            <div className="w-3 h-3 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin mr-1"></div>
+                          ) : (
+                            <X size={14} />
+                          )}
+                          {processingId === booking.id ? 'Cancelling...' : 'Cancel Booking'}
+                        </button>
                      </>
                    )}
                    <button 

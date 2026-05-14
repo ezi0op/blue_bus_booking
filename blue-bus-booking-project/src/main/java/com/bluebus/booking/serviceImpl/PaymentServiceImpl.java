@@ -174,6 +174,9 @@ public class PaymentServiceImpl implements PaymentService {
 		paymentRepository.save(payment);
 		bookingRepository.save(booking);
 
+		// 🔓 Release seats immediately on failure
+		freeSeats(booking);
+
 		// Send failure email
 		emailService.sendPaymentFailed(booking.getContactEmail(), booking.getBookingReference());
 	}
@@ -204,6 +207,7 @@ public class PaymentServiceImpl implements PaymentService {
 		if (payment.getStatus() != PaymentStatus.SUCCESS) {
 			throw new RuntimeException("Refund not applicable for payment status: " + payment.getStatus());
 		}
+		
 
 		Booking booking = payment.getBooking();
 

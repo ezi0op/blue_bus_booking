@@ -175,6 +175,8 @@ public class SmartSearchServiceImpl implements SmartSearchService {
 								.busType(trip.getBus().getBusType().toString())
 								.price(finalPrice)
 								.availableSeats(trip.getAvailableSeats())
+								.routeImage(trip.getRoute().getImage())
+								.busImage(trip.getBus().getImage())
 								.recommendationReason(reason)
 								.matchScore(source != null ? 1.0 : 0.85)
 								.build();

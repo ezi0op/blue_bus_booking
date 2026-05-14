@@ -24,7 +24,9 @@ public class TripDTO {
 
 	private String source;
 	private String destination;
+	private String routeImage;
 	private String busName;
+	private String busImage;
 	private BusType busType;
 
 	private LocalDate journeyDate;

@@ -17,5 +17,5 @@ public class SeatLayoutDTO {
 	private String seatType;
 	private Integer rowNumber;
 	private Integer columnNumber;
-	private String testField;
+	private com.bluebus.booking.dto.enums.DeckType deckType;
 }

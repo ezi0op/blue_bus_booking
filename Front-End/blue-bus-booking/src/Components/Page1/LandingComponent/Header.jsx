@@ -35,15 +35,18 @@ const Header = () => {
 
   return (
     <>
-    {/* Floating Admin Panel Badge - only for ADMIN role */}
+    {/* 💊 Admin Quick Access Pill - High Visibility for Administrators */}
     {token && userRole === 'ADMIN' && (
       <div
         onClick={() => navigate('/admin')}
-        className="fixed bottom-6 left-6 z-[999] flex items-center gap-2 px-5 py-3 bg-[#0d2694] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-blue-900/40 hover:bg-blue-800 transition-all cursor-pointer group animate-in slide-in-from-bottom-4 duration-500"
+        className="fixed bottom-8 left-8 z-[9999] flex items-center gap-3 px-6 py-3.5 bg-blue-600 text-white rounded-full text-[12px] font-black uppercase tracking-[0.2em] shadow-[0_20px_50px_rgba(37,99,235,0.3)] hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all cursor-pointer group animate-in slide-in-from-bottom-8 duration-700"
       >
-        <LayoutDashboard size={16} className="group-hover:scale-110 transition-transform" />
-        Admin Panel
-        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <LayoutDashboard size={18} className="group-hover:rotate-12 transition-transform" />
+        Admin Console
+        <div className="flex gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-white/40 animate-pulse"></span>
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse delay-150"></span>
+        </div>
       </div>
     )}
     <header className="w-full bg-white shadow-md sticky top-0 z-50">
@@ -122,14 +125,6 @@ const Header = () => {
                           >
                             <Ticket size={16} /> My Bookings
                           </button>
-                          {userRole === 'ADMIN' && (
-                            <button 
-                              onClick={() => { setProfileOpen(false); navigate('/admin'); }}
-                              className="w-full flex items-center gap-3 px-3 py-2.5 text-blue-600 text-[13px] font-black hover:bg-blue-50 rounded-xl transition-colors"
-                            >
-                              <ShieldCheck size={16} /> Admin Dashboard
-                            </button>
-                          )}
                           <div className="h-px bg-gray-100 my-2 mx-2"></div>
                           <button 
                             onClick={handleLogout}

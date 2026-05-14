@@ -60,6 +60,9 @@ public class BusOperatorServiceImpl implements BusOperatorService {
 		if (updatedOperator.getRating() != null) {
 			existing.setRating(updatedOperator.getRating());
 		}
+		if (updatedOperator.getImage() != null) {
+			existing.setImage(updatedOperator.getImage());
+		}
 
 		return busOperatorRepository.save(existing);
 	}

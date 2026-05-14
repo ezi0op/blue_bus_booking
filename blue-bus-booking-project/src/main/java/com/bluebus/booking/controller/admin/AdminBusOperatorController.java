@@ -49,6 +49,6 @@ public class AdminBusOperatorController {
 	private BusOperatorDTO mapToDTO(BusOperator op) {
 		return BusOperatorDTO.builder().id(op.getId()).name(op.getName()).contactEmail(op.getContactEmail())
 				.contactPhone(op.getContactPhone()).licenseNumber(op.getLicenseNumber()).rating(op.getRating())
-				.isActive(op.getIsActive()).build();
+				.image(op.getImage()).isActive(op.getIsActive()).build();
 	}
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Tag, Sparkles, AlertCircle, CheckCircle2, Loader2, X } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Tag, Sparkles, AlertCircle, CheckCircle2, Loader2, X, ChevronRight } from 'lucide-react';
 import AvailableCoupons from './AvailableCoupons';
 
 const Coupons = ({ bookingAmount, onApplySuccess, onRemove }) => {
@@ -86,6 +87,15 @@ const Coupons = ({ bookingAmount, onApplySuccess, onRemove }) => {
               {error}
             </div>
           )}
+
+          <div className="pt-2">
+            <Link 
+              to="/offers" 
+              className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 group w-fit"
+            >
+              View All Offers <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="bg-green-50 border border-green-100 rounded-xl p-3 flex items-center justify-between">

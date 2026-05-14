@@ -3,7 +3,7 @@ import axios from 'axios';
 import { 
   Activity, Plus, Edit2, Power, 
   PowerOff, Mail, Phone, Shield, X, Check,
-  Star, Briefcase, ExternalLink, ShieldCheck
+  Star, Briefcase, ExternalLink, ShieldCheck, Image as ImageIcon
 } from 'lucide-react';
 
 const AdminOperator = () => {
@@ -16,7 +16,8 @@ const AdminOperator = () => {
     contactEmail: '',
     contactPhone: '',
     licenseNumber: '',
-    isActive: true
+    isActive: true,
+    image: ''
   });
   const [notification, setNotification] = useState(null);
 
@@ -100,7 +101,7 @@ const AdminOperator = () => {
         </div>
 
         <button 
-          onClick={() => { setEditingItem(null); setFormData({ name: '', contactEmail: '', contactPhone: '', licenseNumber: '', isActive: true }); setShowModal(true); }}
+          onClick={() => { setEditingItem(null); setFormData({ name: '', contactEmail: '', contactPhone: '', licenseNumber: '', isActive: true, image: '' }); setShowModal(true); }}
           className="flex items-center gap-2 px-10 py-5 bg-[#0d2694] text-white rounded-3xl text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all shadow-xl shadow-blue-900/20 active:scale-95"
         >
           <Plus size={18} /> Establish Partner
@@ -121,8 +122,12 @@ const AdminOperator = () => {
               </div>
 
               <div className="flex items-center gap-6 mb-10">
-                <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-[2.5rem] flex items-center justify-center font-black text-3xl shadow-inner group-hover:scale-110 transition-transform">
-                  {op.name?.charAt(0)}
+                <div className="w-20 h-20 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center font-black text-3xl shadow-inner group-hover:scale-110 transition-transform overflow-hidden border border-emerald-100">
+                  {op.image ? (
+                    <img src={op.image} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-emerald-600">{op.name?.charAt(0)}</span>
+                  )}
                 </div>
                 <div>
                   <h3 className="text-2xl font-black text-slate-900 tracking-tight">{op.name}</h3>
@@ -200,6 +205,19 @@ const AdminOperator = () => {
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Service License #</label>
                 <input required type="text" value={formData.licenseNumber} onChange={(e) => setFormData({...formData, licenseNumber: e.target.value})} className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none font-bold text-sm focus:ring-4 focus:ring-blue-500/10 focus:bg-white transition-all" placeholder="AUTH-XXXX-XXXX" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Partner Logo URL</label>
+                <div className="relative">
+                  <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                  <input 
+                    type="url" 
+                    placeholder="https://logo-url.com/logo.png" 
+                    value={formData.image || ''} 
+                    onChange={(e) => setFormData({...formData, image: e.target.value})} 
+                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none font-bold text-sm focus:ring-4 focus:ring-blue-500/10 focus:bg-white transition-all" 
+                  />
+                </div>
               </div>
               <div className="pt-8 flex gap-4">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-5 bg-slate-50 text-slate-600 rounded-3xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">Discard</button>
