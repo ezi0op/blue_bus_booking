@@ -200,7 +200,7 @@ const SeatLayout = ({ tripId, price, onClose }) => {
                     onClick={() => toggleSeat(seat)}
                     title={`Seat ${seat.seatNumber} (${seat.seatType || 'SEATER'})`}
                     className={`
-                      ${isSleeper ? 'w-10 h-16' : 'w-10 h-10'} 
+                      ${isSleeper ? 'w-8 h-12 md:w-10 md:h-16' : 'w-8 h-8 md:w-10 md:h-10'} 
                       rounded-md flex flex-col items-center justify-center transition-all duration-300 shadow-sm relative group shrink-0
                       ${seat.isBooked 
                         ? 'bg-gray-100 border-2 border-gray-200 cursor-not-allowed opacity-60' 
@@ -217,8 +217,8 @@ const SeatLayout = ({ tripId, price, onClose }) => {
                        </div>
                     ) : (
                        <div className="flex flex-col items-center">
-                          <Sofa size={16} className={seat.isBooked ? 'text-gray-300' : isSelected ? 'text-white' : 'text-gray-400 group-hover:text-blue-500'} />
-                          <span className={`text-[8px] font-bold mt-1 ${isSelected ? 'text-white' : 'text-gray-500'}`}>{seat.seatNumber}</span>
+                          <Sofa size={14} className={seat.isBooked ? 'text-gray-300' : isSelected ? 'text-white' : 'text-gray-400 group-hover:text-blue-500'} />
+                          <span className={`text-[7px] md:text-[8px] font-bold mt-0.5 md:mt-1 ${isSelected ? 'text-white' : 'text-gray-500'}`}>{seat.seatNumber}</span>
                        </div>
                     )}
                     

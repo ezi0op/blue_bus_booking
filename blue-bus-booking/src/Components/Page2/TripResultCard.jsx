@@ -24,54 +24,51 @@ const TripResultCard = ({
         </div>
       )}
 
-      <div className="flex-1 flex justify-between items-center w-full">
-        <div className="text-center md:text-left">
+      <div className="flex-1 grid grid-cols-3 md:flex md:justify-between items-center w-full gap-2 md:gap-6">
+        <div className="text-left">
           <div className="flex items-center gap-2 mb-1">
             <Calendar size={14} className="text-blue-600" />
-            <span className="text-xs font-black text-blue-600 uppercase tracking-tighter">{trip.journeyDate}</span>
+            <span className="text-[10px] md:text-xs font-black text-blue-600 uppercase tracking-tighter">{trip.journeyDate}</span>
           </div>
-          <p className="text-2xl font-bold text-gray-800">{trip.departureTime?.slice(0, 5) || trip.departureTime}</p>
-          <p className="text-sm font-semibold text-gray-500 mt-1 uppercase">{from || trip.source}</p>
+          <p className="text-xl md:text-2xl font-bold text-gray-800">{trip.departureTime?.slice(0, 5) || trip.departureTime}</p>
+          <p className="text-[10px] md:text-sm font-semibold text-gray-500 mt-1 uppercase truncate max-w-[80px] md:max-w-none">{from || trip.source}</p>
           
-          {/* Bus Operator Info */}
-          <BusOperatorInfo operator={trip.operator} />
+          {/* Bus Operator Info - Hidden on very small screens to save space */}
+          <div className="hidden sm:block">
+            <BusOperatorInfo operator={trip.operator} />
+          </div>
         </div>
 
-        <div className="flex flex-col items-center px-4 flex-1">
-          <div className="flex items-center gap-1.5 mb-2">
-            <div className="h-[2px] w-8 bg-gray-200"></div>
-            <Clock size={14} className="text-gray-400" />
-            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+        <div className="flex flex-col items-center px-2">
+          <div className="flex items-center gap-1 mb-2">
+            <div className="hidden lg:block h-[1px] w-6 bg-gray-200"></div>
+            <Clock size={12} className="text-gray-400" />
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-tight">
               {trip.route?.duration || '4h 30m'}
             </span>
-            <div className="h-[2px] w-8 bg-gray-200"></div>
+            <div className="hidden lg:block h-[1px] w-6 bg-gray-200"></div>
           </div>
-          <div className="relative w-24 h-16 rounded-xl overflow-hidden border border-gray-100 shadow-sm mb-2 group">
+          <div className="relative w-16 h-10 md:w-24 md:h-16 rounded-lg md:rounded-xl overflow-hidden border border-gray-100 shadow-sm mb-2 group">
              {trip.routeImage || trip.busImage ? (
                <img src={trip.routeImage || trip.busImage} alt="Trip" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
              ) : (
                <div className="w-full h-full bg-slate-50 flex items-center justify-center">
-                 <Bus size={24} className="text-blue-500" />
+                 <Bus size={18} className="text-blue-500" />
                </div>
              )}
           </div>
-          <div className="flex flex-col items-center mt-1">
-            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
-              {trip.availableSeats} Seats Left
+          <div className="flex flex-col items-center">
+            <span className="text-[8px] md:text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 md:px-2 py-0.5 rounded-full border border-blue-100 whitespace-nowrap">
+              {trip.availableSeats} Left
             </span>
-            {trip.route?.distance && (
-              <span className="text-[9px] text-gray-400 font-medium mt-1">
-                {trip.route.distance} KM
-              </span>
-            )}
           </div>
         </div>
 
-        <div className="text-center md:text-right">
-          <p className="text-2xl font-bold text-gray-800">
+        <div className="text-right">
+          <p className="text-xl md:text-2xl font-bold text-gray-800">
             {trip.arrivalTime ? (trip.arrivalTime.includes('T') ? trip.arrivalTime.split('T')[1].slice(0, 5) : trip.arrivalTime.slice(0, 5)) : 'TBD'}
           </p>
-          <p className="text-sm font-semibold text-gray-500 mt-1 uppercase">{to || trip.destination}</p>
+          <p className="text-[10px] md:text-sm font-semibold text-gray-500 mt-1 uppercase truncate max-w-[80px] md:max-w-none">{to || trip.destination}</p>
         </div>
       </div>
 

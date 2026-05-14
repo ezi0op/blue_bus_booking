@@ -206,7 +206,14 @@ const Middle = () => {
               </div>
 
               <div className="flex-1 flex flex-col gap-1 w-full relative">
-                <button onClick={handleSwap} type="button" className="absolute -left-[1.85rem] top-[64%] -translate-y-1/2 z-30 bg-white border border-gray-200 p-2.5 rounded-full shadow-md hover:shadow-lg hover:border-blue-400 hover:text-blue-600 transition-all active:scale-90 hidden md:flex items-center justify-center"><ArrowLeftRight size={14} /></button>
+                {/* Mobile Swap Button */}
+                <button 
+                  onClick={handleSwap} 
+                  type="button" 
+                  className="absolute -right-2 top-[2.4rem] md:-left-[1.85rem] md:top-[64%] -translate-y-1/2 z-30 bg-white border border-gray-200 p-2.5 rounded-full shadow-md hover:shadow-lg hover:border-blue-400 hover:text-blue-600 transition-all active:scale-90 flex items-center justify-center"
+                >
+                  <ArrowLeftRight size={14} className="rotate-90 md:rotate-0" />
+                </button>
                 <label className="text-sm font-semibold text-gray-600">To</label>
                 <div className="relative">
                   <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" />
