@@ -32,6 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 
+### IDE Metadata ###
+/.metadata/
+
 ### Sensitive Files ###
 *.pem
 *.key
