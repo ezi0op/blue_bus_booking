@@ -151,11 +151,11 @@ const Middle = () => {
               <span>Smart Booking, Happy Journey</span>
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight mb-4 drop-shadow-xl" style={{ maxWidth: '520px' }}>
+            <h1 className="text-3xl md:text-6xl font-extrabold text-white leading-tight mb-4 drop-shadow-xl max-w-[300px] md:max-w-[520px]">
               Your Journey<br />Starts Here
             </h1>
 
-            <p className="text-white/90 text-sm md:text-lg leading-relaxed mb-10 drop-shadow-lg" style={{ maxWidth: '420px' }}>
+            <p className="text-white/90 text-xs md:text-lg leading-relaxed mb-10 drop-shadow-lg max-w-[280px] md:max-w-[420px]">
               Book bus tickets easily and travel comfortably<br className="hidden sm:block" />across the country with BlueBus.
             </p>
 
@@ -194,9 +194,9 @@ const Middle = () => {
 
       {/* ── Search Bar Section ── */}
       {searchResults === null && !error && (
-        <div className="relative z-20 flex justify-center w-full px-4 md:px-8 -mt-40 mb-10">
-          <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] p-6">
-            <div className="flex flex-col md:flex-row items-end gap-6">
+        <div className="relative z-20 flex justify-center w-full px-4 md:px-8 -mt-16 md:-mt-40 mb-10">
+          <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] p-4 md:p-6">
+            <div className="flex flex-col md:flex-row items-end gap-4 md:gap-6">
               <div className="flex-1 flex flex-col gap-1 w-full">
                 <label className="text-sm font-semibold text-gray-600">From</label>
                 <div className="relative">
