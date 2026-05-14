@@ -293,21 +293,25 @@ blue-bus-booking-project/
 http://localhost:8080/api
 ```
 
-### Authentication Endpoints
+### Authentication & Authorization Endpoints
+
+The system uses JWT (JSON Web Tokens) for stateless authentication. Most endpoints require the `Authorization: Bearer <token>` header.
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/auth/register` | Create a new user account | No |
+| POST | `/api/auth/login` | Authenticate & receive JWT token | No |
+| POST | `/api/auth/logout` | Invalidate current JWT token | Yes |
+| GET | `/api/auth/verify/{token}` | Verify email address | No |
+| POST | `/api/auth/resend-verification` | Resend verification email | No |
+| PUT | `/api/auth/change-password` | Update password (requires old password) | Yes |
+
+### User Profile Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/auth/register` | Register new user |
-| POST | `/auth/login` | User login (get JWT token) |
-| POST | `/auth/logout` | Logout (blacklist token) |
-
-### User Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/users/{id}` | Get user profile |
-| PUT | `/users/{id}` | Update profile |
-| PUT | `/users/{id}/change-password` | Change password |
+| GET | `/api/auth/user-email/{email}` | Fetch user details by email |
+| PUT | `/api/users/{id}` | Update profile (Name, Phone, Image URL) |
 
 ### Bus Endpoints
 
@@ -444,12 +448,12 @@ Trip → Booking
 
 ### Authentication & Authorization
 
-- **JWT Token Authentication** - Secure token-based auth
-- **Password Encryption** - BCrypt hashing (strength 12)
-- **Token Blacklisting** - Logout via token blacklist
-- **CORS Configuration** - Cross-origin request handling
-- **Role-Based Access Control** - Admin, User roles
-- **Stateless Session** - JWT-based state management
+- **JWT (JSON Web Token)** - Stateless security implementation using `jjwt 0.12.6`
+- **BCrypt Hashing** - Passwords stored with strength 12 for maximum protection
+- **Account Verification** - Compulsory email verification via secure tokens
+- **Token Invalidation** - Robust logout mechanism using a blacklisted token repository
+- **CORS Protection** - Whitelisted origins for secure cross-domain requests
+- **RBAC (Role Based Access Control)** - Fine-grained access for `ADMIN` and `USER` roles
 
 ### Endpoint Protection
 
