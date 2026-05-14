@@ -75,7 +75,9 @@ const Update = () => {
 
       if (response.data.success) {
         setSuccess('Profile updated successfully!');
-        // Update local storage if email changed
+        // Update local storage
+        localStorage.setItem('userImage', formData.image || '');
+        localStorage.setItem('userName', formData.name);
         if (formData.email !== localStorage.getItem('userEmail')) {
           localStorage.setItem('userEmail', formData.email);
         }

@@ -7,7 +7,7 @@ import Page2 from '../../Page2/Page2'
 import SeatLayout from '../../Page2/SeatLayout/SeatLayout'
 import middleImg from '../../../assets/middle.png'
 import TripResultCard from '../../Page2/TripResultCard'
-import { Bus, Ticket, Armchair, ShieldCheck, Sofa, Zap, MapPin, CalendarDays, Search, Clock, Map as MapIcon, ChevronDown, ChevronUp, MapPin as StopIcon, ArrowLeftRight } from 'lucide-react'
+import { MapPin, ArrowLeftRight, Search, Calendar, CalendarDays, Ticket, ShieldCheck, Bus, Armchair, Sofa, Zap, Clock, Map as MapIcon, ChevronDown, ChevronUp, MapPin as StopIcon } from 'lucide-react';
 
 const Middle = () => {
   const location = useLocation();
@@ -188,46 +188,46 @@ const Middle = () => {
       {searchResults === null && !error && (
         <div className="relative z-20 flex justify-center w-full px-4 md:px-8 mt-[-2rem] md:-mt-40 mb-16 animate-in slide-in-from-bottom-10 duration-1000">
           <div className="w-full max-w-5xl bg-white rounded-[2rem] shadow-[0_20px_70px_rgba(0,0,0,0.1)] p-6 md:p-8 border border-gray-50">
-            <div className="flex flex-col md:flex-row items-end gap-5 md:gap-6">
-              <div className="flex-1 flex flex-col gap-1 w-full">
+            <div className="flex flex-col md:flex-row items-center md:items-end gap-5 md:gap-2 w-full">
+              {/* From Column */}
+              <div className="flex-1 flex flex-col gap-1 w-full relative">
                 <label className="text-sm font-semibold text-gray-600">From</label>
                 <div className="relative">
                   <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" />
-                  <input type="text" value={from} onChange={(e) => setFrom(e.target.value)} placeholder="Starting City" className="w-full uppercase border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
+                  <input type="text" value={from} onChange={(e) => setFrom(e.target.value)} placeholder="Starting City" className="w-full uppercase border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-700 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all" />
                 </div>
               </div>
 
-              <div className="flex-1 flex flex-col gap-1 w-full relative">
-                {/* Mobile Swap Button */}
+              {/* Swap Button (Mobile: Between, Desktop: Between) */}
+              <div className="flex items-center justify-center z-30 -my-3 md:my-0 md:-mx-3">
                 <button 
                   onClick={handleSwap} 
                   type="button" 
-                  className="absolute -right-2 top-[2.4rem] md:-left-[1.85rem] md:top-[64%] -translate-y-1/2 z-30 bg-white border border-gray-200 p-2.5 rounded-full shadow-md hover:shadow-lg hover:border-blue-400 hover:text-blue-600 transition-all active:scale-90 flex items-center justify-center"
+                  className="bg-white border border-gray-200 p-3 rounded-full shadow-md hover:shadow-lg hover:border-blue-400 hover:text-blue-600 transition-all active:scale-90 flex items-center justify-center group"
                 >
-                  <ArrowLeftRight size={14} className="rotate-90 md:rotate-0" />
+                  <ArrowLeftRight size={16} className="rotate-90 md:rotate-0 group-hover:scale-110 transition-transform" />
                 </button>
+              </div>
+
+              {/* To Column */}
+              <div className="flex-1 flex flex-col gap-1 w-full relative">
                 <label className="text-sm font-semibold text-gray-600">To</label>
                 <div className="relative">
                   <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" />
-                  <input type="text" value={to} onChange={(e) => setTo(e.target.value)} placeholder="Destination City" className="w-full uppercase border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
+                  <input type="text" value={to} onChange={(e) => setTo(e.target.value)} placeholder="Destination City" className="w-full uppercase border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-700 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all" />
                 </div>
               </div>
 
+              {/* Date Column */}
               <div className="flex-1 flex flex-col gap-1 w-full">
                 <label className="text-sm font-semibold text-gray-600">Date</label>
                 <div className="relative">
-                  <CalendarDays size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input 
-                    type="date" 
-                    value={date} 
-                    min={new Date().toISOString().split('T')[0]}
-                    onChange={(e) => setDate(e.target.value)} 
-                    className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" 
-                  />
+                  <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" />
+                  <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-700 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all" />
                 </div>
               </div>
 
-              <button onClick={handleSearch} disabled={loading} className="w-full md:w-auto flex items-center justify-center bg-[#1d4ed8] hover:bg-blue-800 active:scale-95 text-white font-bold text-[15px] px-10 py-3.5 rounded-lg shadow transition-all duration-200 disabled:bg-blue-400">
+              <button onClick={handleSearch} disabled={loading} className="w-full md:w-auto h-[54px] flex items-center justify-center bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-[15px] px-10 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 disabled:bg-blue-400">
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> : null}
                 {loading ? 'Searching...' : 'Search Buses'}
               </button>

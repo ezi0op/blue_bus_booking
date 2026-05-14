@@ -10,6 +10,8 @@ import CreateBookings from './Components/Bookings/CreateBookings';
 import PaymentSuccess from './Components/Payments/PaymentSuccess';
 import Offers from './Components/Bookings/Offers';
 import Verification from './Components/UserComponent/Verfication';
+import ForgotPassword from './Components/UserComponent/ForgotPassword';
+import ResetPassword from './Components/UserComponent/ResetPassword';
 import AllOperator from './Components/BusOperator/AllOperator';
 import ChatBot from './Components/AI Chat/ChatBot/ChatBot';
 import SmartSearch from './Components/AI Chat/SmartSearch';
@@ -49,6 +51,8 @@ const App = () => {
         <Route path="/verify/:token" element={<Verification />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/update" element={<Update />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/bookings" element={<MyBookings />} />
         <Route path="/create-booking" element={<CreateBookings />} />
         <Route path="/offers" element={<Offers />} />

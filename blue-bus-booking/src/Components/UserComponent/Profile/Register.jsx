@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import api from '../../../api/axiosConfig';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Mail, Lock, Phone, UserPlus, AlertCircle, ArrowLeft } from 'lucide-react';
+import { User, Mail, Lock, Phone, UserPlus, AlertCircle, ArrowLeft, Camera, X } from 'lucide-react';
 
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    phone: ''
+    phone: '',
+    image: ''
   });
+  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -17,6 +19,11 @@ const Register = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleImageUrlChange = (e) => {
+    const url = e.target.value;
+    setFormData({ ...formData, image: url });
   };
 
   const handleRegister = async (e) => {
@@ -69,6 +76,40 @@ const Register = () => {
           )}
 
           <form className="space-y-5" onSubmit={handleRegister}>
+            {/* Profile Photo Preview */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="w-20 h-20 rounded-full border-4 border-blue-50 bg-gray-100 flex items-center justify-center overflow-hidden shadow-sm">
+                {formData.image ? (
+                  <img 
+                    src={formData.image} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.src = ''; }} // Clear if URL is invalid
+                  />
+                ) : (
+                  <User size={32} className="text-gray-400" />
+                )}
+              </div>
+              <p className="mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Photo Preview</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Profile Photo URL</label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Camera className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="url"
+                  name="image"
+                  value={formData.image}
+                  onChange={handleImageUrlChange}
+                  className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-lg py-3 border"
+                  placeholder="https://example.com/photo.jpg"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700">Full Name</label>
               <div className="mt-1 relative rounded-md shadow-sm">
