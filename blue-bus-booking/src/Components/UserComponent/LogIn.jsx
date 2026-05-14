@@ -166,13 +166,6 @@ const LogIn = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="text-sm">
-                <span className="font-medium text-gray-300">
-                  Forgot your password?
-                </span>
-              </div>
-            </div>
 
             <button
               type="submit"
