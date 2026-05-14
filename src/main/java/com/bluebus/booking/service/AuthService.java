@@ -17,8 +17,4 @@ public interface AuthService {
 	User getByEmail(String email);
 
 	void resendVerificationEmail(String email);
-	
-	void forgotPassword(String email);
-	
-	void resetPassword(String token, String newPassword);
 }

@@ -20,6 +20,4 @@ public interface EmailService {
 	void sendChatNotificationEmail(String toEmail, String subject, String body);
 
 	void sendVerificationEmail(String to, String token);
-
-	void sendPasswordResetEmail(String to, String token);
 }

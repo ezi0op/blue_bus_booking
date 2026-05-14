@@ -116,7 +116,8 @@ public class SecurityConfig {
 					"http://127.0.0.1:3000", 
 					"http://localhost:5173",
 					"https://bluebusbooking.duckdns.org",
-					"https://bluebusbooking.vercel.app"
+					"https://bluebusbooking.vercel.app",
+					"https://bluebusfront-end.vercel.app"
 				));
 		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(Arrays.asList("*"));

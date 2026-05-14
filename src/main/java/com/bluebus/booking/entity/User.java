@@ -79,10 +79,6 @@ public class User {
 	private Boolean isVerified = false;
 
 	private LocalDateTime lastLogin;
-	
-	private String resetPasswordToken;
-	
-	private LocalDateTime resetPasswordTokenExpiry;
 
 	@Builder.Default
 	@Column(nullable = false)

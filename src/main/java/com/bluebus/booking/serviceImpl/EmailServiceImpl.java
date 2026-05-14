@@ -2,14 +2,11 @@ package com.bluebus.booking.serviceImpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.bluebus.booking.entity.Booking;
-import com.bluebus.booking.entity.Payment;
 import com.bluebus.booking.service.EmailService;
 
 import jakarta.mail.internet.MimeMessage;
@@ -198,20 +195,5 @@ public class EmailServiceImpl implements EmailService {
 		sendHtmlEmail(toEmail, subject, content);
 	}
 
-	@Override
-	@Async
-	public void sendPasswordResetEmail(String toEmail, String token) {
-		String subject = "Reset Your Password - Blue Bus Booking 🔑";
-		String resetLink = frontendUrl + "/reset-password/" + token;
-		
-		String content = "<h2>Password Reset Request</h2>"
-				+ "<p>We received a request to reset your password for your <strong>Blue Bus Booking</strong> account. Click the button below to set a new password:</p>"
-				+ "<div style='text-align: center; margin: 40px 0;'>"
-				+ "  <a href='" + resetLink + "' style='background-color: #2563eb; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);'>Reset Password</a>"
-				+ "</div>"
-				+ "<p>If you didn't request this, you can safely ignore this email. Your password will remain unchanged.</p>"
-				+ "<p>This link will expire in 1 hour.</p>";
-
-		sendHtmlEmail(toEmail, subject, content);
-	}
+	
 }
