@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, Edit2, LogOut, ShieldCheck, ArrowLeft, Shield, AlertCircle } from 'lucide-react';
 import SeatPreference from '../AI Chat/SeatPreference';
@@ -22,9 +22,7 @@ const Profile = () => {
       }
 
       try {
-        const response = await axios.get(`http://localhost:8080/api/auth/user-email/${email}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get(`/api/auth/user-email/${email}`);
 
         if (response.data.success) {
           setUserData(response.data.data);

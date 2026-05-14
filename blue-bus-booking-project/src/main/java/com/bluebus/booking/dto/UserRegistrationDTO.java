@@ -37,4 +37,6 @@ public class UserRegistrationDTO {
 
 	@Builder.Default
 	private Role role = Role.USER;
+
+	private Long busOperatorId;
 }

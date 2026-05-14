@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 import { Ticket, Calendar, MapPin, User, ChevronRight, AlertCircle, ArrowLeft, Clock, CreditCard, ChevronDown, X, ShieldCheck } from 'lucide-react';
 import BookingItem from './BookingItem';
@@ -30,9 +30,7 @@ const MyBookings = () => {
       }
 
       try {
-        const response = await axios.get(`http://localhost:8080/api/bookings/user/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get(`/api/bookings/user/${userId}`);
 
         if (response.data.success) {
           // Sort by booking time descending (newest first)
@@ -70,9 +68,7 @@ const MyBookings = () => {
     const token = localStorage.getItem('token');
     try {
       setProcessingId(bookingId);
-      const response = await axios.put(`http://localhost:8080/api/bookings/${bookingId}/cancel`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.put(`/api/bookings/${bookingId}/cancel`, {});
 
       if (response.data.success) {
         // Update local state immediately for better UX
@@ -96,11 +92,10 @@ const MyBookings = () => {
     const filename = `${type}_${bookingId}.pdf`;
 
     try {
-      const response = await axios({
-        url: `http://localhost:8080${endpoint}`,
+      const response = await api({
+        url: endpoint,
         method: 'GET',
-        responseType: 'blob',
-        headers: { Authorization: `Bearer ${token}` }
+        responseType: 'blob'
       });
 
       const url = window.URL.createObjectURL(new Blob([response.data]));

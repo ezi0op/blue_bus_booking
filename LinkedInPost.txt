@@ -1,0 +1,43 @@
+🚀 Excited to share **Blue Bus Booking** — a comprehensive full-stack platform for modern bus transportation! 🚌
+
+After months of engineering, I've built a production-ready ecosystem that connects users and admins in a seamless booking experience.
+
+**What's Under the Hood:**
+
+🎯 **Architecture:**
+- React 19 + Vite frontend on Vercel (instant deployments)
+- Spring Boot 3 REST API with Java 21 on AWS EC2
+- MySQL for reliable data persistence
+- Real-time seat tracking & dynamic pricing
+
+👥 **Multi-Role System:**
+- **Users**: Search trips, book seats, manage bookings, make payments
+- **Admins**: Full access to manage buses, routes, trips, users, bookings, coupons & reporting
+
+💳 **Core Features:**
+- JWT authentication with stateless security & token blacklisting
+- Razorpay payment gateway for seamless transactions
+- Real-time seat availability & intelligent allocation
+- Automated email notifications (Gmail SMTP)
+- Advanced search filters & trip recommendations
+- Multi-passenger booking support
+
+🤖 **AI-Powered Intelligence:**
+- AI Chatbot powered through OpenRouter for 24/7 booking assistance
+- Smart seat recommendations based on user preferences
+- Personalized trip recommendations
+
+**Technical Highlights:**
+→ Secure password management with BCrypt encryption
+→ URL-based profile photos for streamlined UX
+→ CORS policies optimized for cross-domain security
+→ Lombok for reduced boilerplate
+→ Deployed on AWS EC2 for 99.9% uptime
+
+**Live Platform:** https://bluebusbooking.vercel.app
+
+This journey taught me enterprise-level full-stack development, from architecture to production deployment challenges. Every feature is built with scalability and security in mind.
+
+Grateful for the learning! Open to connecting with fellow engineers interested in system design, AI integration, or backend optimization. 💻
+
+#FullStackDevelopment #SpringBoot #ReactJS #JavaDevelopment #AWSCloud #SoftwareEngineering #TechJourney #APIDevelopment #AI #Backend

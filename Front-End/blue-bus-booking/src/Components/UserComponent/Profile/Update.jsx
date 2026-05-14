@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../../api/axiosConfig';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { User, Mail, Phone, Image as ImageIcon, Save, ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
 
@@ -23,6 +23,44 @@ const Update = () => {
   const [fetching, setFetching] = useState(!initialUser);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // Password change state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passLoading, setPassLoading] = useState(false);
+  const [passwords, setPasswords] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+    
+    setPassLoading(true);
+    setError('');
+    
+    try {
+      const response = await api.put('/api/auth/change-password', {
+        email: formData.email,
+        oldPassword: passwords.oldPassword,
+        newPassword: passwords.newPassword
+      });
+      
+      if (response.data.success) {
+        setSuccess('Password changed successfully!');
+        setShowPasswordModal(false);
+        setPasswords({ oldPassword: '', newPassword: '', confirmPassword: '' });
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to change password');
+    } finally {
+      setPassLoading(false);
+    }
+  };
 
   // If user navigated here directly without state, fetch the profile first
   useEffect(() => {
@@ -36,9 +74,7 @@ const Update = () => {
         }
 
         try {
-          const response = await axios.get(`http://localhost:8080/api/auth/user-email/${email}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const response = await api.get(`/api/auth/user-email/${email}`);
           
           if (response.data.success) {
             const data = response.data.data;
@@ -73,13 +109,13 @@ const Update = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put(`http://localhost:8080/api/users/${userId}`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.put(`/api/users/${userId}`, formData);
 
       if (response.data.success) {
         setSuccess('Profile updated successfully!');
-        // Update local storage if email changed
+        // Update local storage
+        localStorage.setItem('userImage', formData.image || '');
+        localStorage.setItem('userName', formData.name);
         if (formData.email !== localStorage.getItem('userEmail')) {
           localStorage.setItem('userEmail', formData.email);
         }
@@ -229,9 +265,92 @@ const Update = () => {
                 </button>
               </div>
             </form>
+
+            <div className="mt-12 pt-8 border-t border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900 mb-6">Security Settings</h3>
+              <div className="bg-gray-50 rounded-2xl p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h4 className="font-bold text-gray-800">Password</h4>
+                    <p className="text-sm text-gray-500 mt-1">Change your account password securely.</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowPasswordModal(true)}
+                    className="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-100 transition-all shadow-sm"
+                  >
+                    Update Password
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-8">
+              <h3 className="text-2xl font-black text-gray-900 mb-2">Change Password</h3>
+              <p className="text-sm text-gray-500 mb-8 font-medium">Protect your account with a strong password.</p>
+
+              <form onSubmit={handlePasswordChange} className="space-y-5">
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Current Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={passwords.oldPassword}
+                    onChange={(e) => setPasswords({...passwords, oldPassword: e.target.value})}
+                    className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">New Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={passwords.newPassword}
+                    onChange={(e) => setPasswords({...passwords, newPassword: e.target.value})}
+                    className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={passwords.confirmPassword}
+                    onChange={(e) => setPasswords({...passwords, confirmPassword: e.target.value})}
+                    className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium"
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordModal(false)}
+                    className="flex-1 px-6 py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 transition-all active:scale-95"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={passLoading}
+                    className="flex-1 px-6 py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:bg-blue-400"
+                  >
+                    {passLoading ? 'Updating...' : 'Update'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

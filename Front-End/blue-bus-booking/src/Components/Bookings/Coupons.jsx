@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { useNavigate, Link } from 'react-router-dom';
 import { Tag, Sparkles, AlertCircle, CheckCircle2, Loader2, X, ChevronRight } from 'lucide-react';
 import AvailableCoupons from './AvailableCoupons';
@@ -19,11 +19,9 @@ const Coupons = ({ bookingAmount, onApplySuccess, onRemove }) => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:8080/api/coupons/apply', {
+      const response = await api.post('/api/coupons/apply', {
         couponCode: code.toUpperCase(),
         bookingAmount: bookingAmount
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {

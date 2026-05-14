@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Download, Home, FileText, Ticket as TicketIcon, ArrowRight, Loader2, Mail, Eye } from 'lucide-react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import Ticket from './PDF GEN/Ticket';
 import Invoice from './PDF GEN/Invoice';
 
@@ -26,19 +26,14 @@ const PaymentSuccess = () => {
     });
 
     const fetchBookingDetails = async () => {
-      const token = localStorage.getItem('token');
       try {
-        const response = await axios.get(`http://localhost:8080/api/bookings/${bookingId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get(`/api/bookings/${bookingId}`);
         if (response.data.success) {
           setBookingData(response.data.data);
         }
 
         try {
-          const paymentRes = await axios.get(`http://localhost:8080/api/payments/${bookingId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const paymentRes = await api.get(`/api/payments/${bookingId}`);
           if (paymentRes.data.success) {
              setPaymentData(paymentRes.data.data);
           }
@@ -55,18 +50,13 @@ const PaymentSuccess = () => {
 
     fetchBookingDetails();
   }, [bookingId]);
-
   const handleDownload = async (type) => {
-    const token = localStorage.getItem('token');
     const endpoint = type === 'ticket' ? `/api/tickets/${bookingId}` : `/api/invoices/${bookingId}`;
     const filename = `${type}_${bookingId}.pdf`;
 
     try {
-      const response = await axios({
-        url: `http://localhost:8080${endpoint}`,
-        method: 'GET',
-        responseType: 'blob', // Important for PDF
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await api.get(endpoint, {
+        responseType: 'blob'
       });
 
       // Create a link to download the file

@@ -183,13 +183,42 @@ const Header = () => {
             >
               <Ticket size={18} /> Offers
             </button>
-            {token && (
-              <button 
-                onClick={() => { setMenuOpen(false); navigate('/bookings'); }}
-                className="text-gray-700 font-medium hover:text-blue-600 text-left transition-colors duration-200 flex items-center gap-2"
-              >
-                <Ticket size={18} /> My Bookings
-              </button>
+            {token ? (
+              <>
+                <button 
+                  onClick={() => { setMenuOpen(false); navigate('/profile'); }}
+                  className="text-gray-700 font-medium hover:text-blue-600 text-left transition-colors duration-200 flex items-center gap-2"
+                >
+                  <User size={18} /> My Profile
+                </button>
+                <button 
+                  onClick={() => { setMenuOpen(false); navigate('/bookings'); }}
+                  className="text-gray-700 font-medium hover:text-blue-600 text-left transition-colors duration-200 flex items-center gap-2"
+                >
+                  <Ticket size={18} /> My Bookings
+                </button>
+                <button 
+                  onClick={handleLogout}
+                  className="text-red-500 font-bold hover:text-red-600 text-left transition-colors duration-200 flex items-center gap-2"
+                >
+                  <LogOut size={18} /> Sign Out
+                </button>
+              </>
+            ) : (
+              <div className="flex flex-col gap-3 pt-2 border-t border-gray-50">
+                <button 
+                  onClick={() => { setMenuOpen(false); navigate('/login'); }}
+                  className="w-full py-3 text-blue-600 font-bold border-2 border-blue-600 rounded-xl flex items-center justify-center gap-2"
+                >
+                  <LogIn size={18} /> Log In
+                </button>
+                <button 
+                  onClick={() => { setMenuOpen(false); navigate('/register'); }}
+                  className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+                >
+                  <UserPlus size={18} /> Sign Up
+                </button>
+              </div>
             )}
           </div>
         )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../../../api/axiosConfig';
 import { MessageCircle, X, Send, Bot, User, Loader2, Sparkles, Minus, Maximize2, Trash2 } from 'lucide-react';
 
 const ChatBot = () => {
@@ -81,7 +81,7 @@ const ChatBot = () => {
       // Correctly fetch userId from localStorage
       const userId = localStorage.getItem('userId');
 
-      const response = await axios.post('http://localhost:8080/api/ai/chat/message', {
+      const response = await api.post('/api/ai/chat/message', {
         message: currentMessage,
         sessionId: sessionId,
         userId: userId
@@ -112,7 +112,7 @@ const ChatBot = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] font-sans">
+    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[9999] font-sans">
       {/* Floating Toggle Button */}
       {!isOpen && (
         <button

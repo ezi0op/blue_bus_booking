@@ -11,7 +11,7 @@ import PaymentSuccess from './Components/Payments/PaymentSuccess';
 import Offers from './Components/Bookings/Offers';
 import Verification from './Components/UserComponent/Verfication';
 import AllOperator from './Components/BusOperator/AllOperator';
-import ChatBot from './Components/AI Chat/ChatBot/ChatBot';
+import ChatBot from './Components/AI Chat/ChatBot/ChatBot.jsx';
 import SmartSearch from './Components/AI Chat/SmartSearch';
 import AdminLayout from './Components/AdminDashBoard/AdminLayout';
 import AdminDashBoard from './Components/AdminDashBoard/AdminDashBoard';
@@ -24,6 +24,11 @@ import AdminSeat from './Components/AdminDashBoard/AdminSeat';
 import AdminSeatAvail from './Components/AdminDashBoard/AdminSeatAvail';
 import AdminCoupon from './Components/AdminDashBoard/AdminCoupon';
 import AdminBooking from './Components/AdminDashBoard/AdminBooking';
+import OperatorLayout from './Components/OperatorPortal/OperatorLayout';
+import OperatorDashboard from './Components/OperatorPortal/OperatorDashboard';
+import OperatorBuses from './Components/OperatorPortal/OperatorBuses';
+import OperatorTrips from './Components/OperatorPortal/OperatorTrips';
+import OperatorEarnings from './Components/OperatorPortal/OperatorEarnings';
 
 const App = () => {
   React.useEffect(() => {
@@ -68,6 +73,14 @@ const App = () => {
           <Route path="coupons" element={<AdminCoupon />} />
           <Route path="bookings" element={<AdminBooking />} />
           <Route path="maintenance" element={<AdminSeatAvail />} />
+        </Route>
+
+        {/* 🔐 Operator Routes */}
+        <Route path="/operator" element={<OperatorLayout />}>
+          <Route index element={<OperatorDashboard />} />
+          <Route path="buses" element={<OperatorBuses />} />
+          <Route path="trips" element={<OperatorTrips />} />
+          <Route path="earnings" element={<OperatorEarnings />} />
         </Route>
       </Routes>
       <ChatBot />

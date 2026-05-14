@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { Star, Mail, Phone, ShieldCheck, MapPin, Bus, Globe, Activity, ArrowLeft } from 'lucide-react';
 import Header from '../Page1/LandingComponent/Header';
 import Footer from '../Page1/LandingComponent/Footer';
@@ -22,7 +22,7 @@ const AllOperator = () => {
   const fetchAllOperators = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:8080/api/operators');
+      const res = await api.get('/api/operators');
       if (res.data.success) {
         setOperators(res.data.data);
       }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { 
   Percent, Plus, Edit2, Trash2, X, Check,
   Tag, Calendar, AlertTriangle, ShieldCheck, Zap
@@ -33,10 +33,8 @@ const AdminCoupon = () => {
 
   const fetchCoupons = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      const res = await axios.get('http://localhost:8080/api/admin/coupons', { headers });
+      const res = await api.get('/api/admin/coupons');
       setCoupons(res.data.data || []);
     } catch (err) {
       showMessage('Failed to load coupons');
@@ -47,14 +45,12 @@ const AdminCoupon = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
       if (editingItem) {
-        await axios.put(`http://localhost:8080/api/admin/coupons/${editingItem.id}`, formData, { headers });
+        await api.put(`/api/admin/coupons/${editingItem.id}`, formData);
         showMessage('Coupon updated successfully', 'success');
       } else {
-        await axios.post('http://localhost:8080/api/admin/coupons', formData, { headers });
+        await api.post('/api/admin/coupons', formData);
         showMessage('Coupon created successfully', 'success');
       }
       setShowModal(false);
@@ -65,10 +61,8 @@ const AdminCoupon = () => {
   };
 
   const handleDelete = async () => {
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      await axios.delete(`http://localhost:8080/api/admin/coupons/${selectedCouponId}`, { headers });
+      await api.delete(`/api/admin/coupons/${selectedCouponId}`);
       showMessage('Coupon deleted successfully', 'success');
       setShowDeleteModal(false);
       fetchCoupons();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../../api/axiosConfig';
 import { Sparkles, MapPin, Calendar, Clock, Banknote, ArrowRight, Loader2, Star, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,10 +16,7 @@ const RecommendSeat = ({ userId }) => {
   const fetchRecommendations = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`http://localhost:8080/api/recommendations/user/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get(`/api/recommendations/user/${userId}`);
 
       if (response.data.success) {
         setRecommendations(response.data.data);

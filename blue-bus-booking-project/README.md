@@ -23,7 +23,7 @@ A comprehensive Spring Boot REST API for managing online bus ticket booking oper
 
 ## 🎯 Project Overview
 
-The Blue Bus Booking Project is a full-featured backend application designed to manage online bus ticket booking. It handles bus operations management, route management, trip scheduling, real-time seat availability, booking operations, and user management with JWT-based authentication and AI-powered recommendations.
+The Blue Bus Booking Project is a full-featured backend application designed to manage online bus ticket booking. It handles bus management, route management, trip scheduling, real-time seat availability, booking operations, and user management with JWT-based authentication and AI-powered recommendations.
 
 **Key Capabilities:**
 - Multi-user booking platform
@@ -36,9 +36,10 @@ The Blue Bus Booking Project is a full-featured backend application designed to 
 ## ✨ Features
 
 ### Core Features
-- **User Management** - Registration, login, profile management, password change
+- **User Management** - Registration, login, profile management with **URL-based profile photos**
 - **Authentication & Authorization** - JWT-based authentication with token blacklisting
-- **Bus & Operator Management** - Manage bus details, operators, and their operations
+- **Security** - Secure **Change Password** flow within the profile section
+- **Bus Management** - Manage bus details, routes, trips, coupons, and related operations
 - **Route Management** - Define and manage bus routes with stops
 - **Trip Management** - Schedule and manage bus trips with pricing and availability
 - **Booking System** - Create, confirm, and cancel bookings with multi-passenger support
@@ -48,10 +49,10 @@ The Blue Bus Booking Project is a full-featured backend application designed to 
 
 ### Advanced Features
 - **AI-Powered Chatbot** - Natural language chat interface for booking assistance
-- **Smart Search** - AI-driven trip search using natural language processing
+- **Smart Search** - Filter-based trip search with AI-assisted recommendations
 - **Seat Preferences** - AI learns user preferences and suggests optimal seats
 - **Recommendation Engine** - Personalized trip recommendations based on behavior
-- **Dynamic Pricing** - Intelligent pricing based on demand and availability
+- **Dynamic Pricing** - Intelligent pricing based on demand and availability, using a stored `basePrice` as the pricing anchor
 - **Advanced Filters** - Search trips by date, price range, departure time, bus type
 
 ## 🛠️ Tech Stack
@@ -219,6 +220,46 @@ java -jar target/blue-bus-booking-project-0.0.1-SNAPSHOT.jar
 
 Application runs on `http://localhost:8080` by default.
 
+## ☁️ AWS Deployment (EC2)
+
+To deploy this backend on Amazon Linux 2023:
+
+1. **Upload the JAR**: Build the JAR locally and upload it to `/home/ec2-user/`.
+2. **Create Service File**: `sudo nano /etc/systemd/system/bluebus.service`
+   ```ini
+   [Unit]
+   Description=Blue Bus Booking Spring Boot App
+   After=network.target
+
+   [Service]
+   User=ec2-user
+   WorkingDirectory=/home/ec2-user
+   ExecStart=/usr/bin/java -jar /home/ec2-user/blue-bus-booking-project-0.0.1-SNAPSHOT.jar
+   SuccessExitStatus=143
+   Restart=always
+   RestartSec=10
+
+   # Environment Variables
+   Environment=DB_URL=jdbc:mysql://your-rds-endpoint:3306/bluebusbooking
+   Environment=DB_USERNAME=admin
+   Environment=DB_PASSWORD=your_password
+   Environment=RAZORPAY_KEY_ID=your_id
+   Environment=RAZORPAY_KEY_SECRET=your_secret
+   Environment=MAIL_USERNAME=your_email@gmail.com
+   Environment=MAIL_PASSWORD="your_app_password"
+   Environment=FRONTEND_URL=https://bluebusbooking.vercel.app
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+3. **Start Service**:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable bluebus
+   sudo systemctl start bluebus
+   sudo systemctl status bluebus
+   ```
+
 ## 📁 Project Structure
 
 ```
@@ -252,21 +293,25 @@ blue-bus-booking-project/
 http://localhost:8080/api
 ```
 
-### Authentication Endpoints
+### Authentication & Authorization Endpoints
+
+The system uses JWT (JSON Web Tokens) for stateless authentication. Most endpoints require the `Authorization: Bearer <token>` header.
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/auth/register` | Create a new user account | No |
+| POST | `/api/auth/login` | Authenticate & receive JWT token | No |
+| POST | `/api/auth/logout` | Invalidate current JWT token | Yes |
+| GET | `/api/auth/verify/{token}` | Verify email address | No |
+| POST | `/api/auth/resend-verification` | Resend verification email | No |
+| PUT | `/api/auth/change-password` | Update password (requires old password) | Yes |
+
+### User Profile Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/auth/register` | Register new user |
-| POST | `/auth/login` | User login (get JWT token) |
-| POST | `/auth/logout` | Logout (blacklist token) |
-
-### User Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/users/{id}` | Get user profile |
-| PUT | `/users/{id}` | Update profile |
-| PUT | `/users/{id}/change-password` | Change password |
+| GET | `/api/auth/user-email/{email}` | Fetch user details by email |
+| PUT | `/api/users/{id}` | Update profile (Name, Phone, Image URL) |
 
 ### Bus Endpoints
 
@@ -370,7 +415,6 @@ http://localhost:8080/api
 
 **Bus Operations**
 - **Bus** - Bus details and specifications
-- **BusOperator** - Bus company information
 - **Route** - Bus routes
 - **Stop** - Individual stops on routes
 
@@ -394,7 +438,6 @@ User → ChatMessage
 Bus → Seat
 Bus → Trip
 Trip → SeatAvailability
-BusOperator → Bus
 Route → Stop
 Trip → Booking
 ```
@@ -403,12 +446,12 @@ Trip → Booking
 
 ### Authentication & Authorization
 
-- **JWT Token Authentication** - Secure token-based auth
-- **Password Encryption** - BCrypt hashing (strength 12)
-- **Token Blacklisting** - Logout via token blacklist
-- **CORS Configuration** - Cross-origin request handling
-- **Role-Based Access Control** - Admin, User roles
-- **Stateless Session** - JWT-based state management
+- **JWT (JSON Web Token)** - Stateless security implementation using `jjwt 0.12.6`
+- **BCrypt Hashing** - Passwords stored with strength 12 for maximum protection
+- **Account Verification** - Compulsory email verification via secure tokens
+- **Token Invalidation** - Robust logout mechanism using a blacklisted token repository
+- **CORS Protection** - Whitelisted origins for secure cross-domain requests
+- **RBAC (Role Based Access Control)** - Fine-grained access for `ADMIN` and `USER` roles
 
 ### Endpoint Protection
 
@@ -579,3 +622,4 @@ For issues or questions:
 ---
 
 **Questions?** Refer to the documentation sections above or check the code comments for implementation details.
+

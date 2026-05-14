@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { Sparkles, Layout, User, Armchair, ChevronRight, BarChart3, Info } from 'lucide-react';
 import RecommendSeat from '../Page2/SeatPreference/RecommendSeat';
 
@@ -14,14 +14,9 @@ const SeatPreference = ({ userId }) => {
 
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem('token');
         const [prefRes, suggRes] = await Promise.all([
-          axios.get(`http://localhost:8080/api/seat-preference/${userId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          axios.get(`http://localhost:8080/api/seat-preference/${userId}/suggest`, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
+          api.get(`/api/seat-preference/${userId}`),
+          api.get(`/api/seat-preference/${userId}/suggest`)
         ]);
 
         if (prefRes.data.success) setPreference(prefRes.data.data);

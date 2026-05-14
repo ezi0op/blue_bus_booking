@@ -7,7 +7,7 @@ public interface EmailService {
 
 	void sendWelcomeEmail(String toEmail, String userName);
 
-	void sendBookingConfirmation(Booking booking);
+	void sendBookingConfirmation(String toEmail, String reference, String source, String destination, String date);
 
 	void sendPaymentSuccess(String toEmail, String bookingRef, String paymentId, java.math.BigDecimal amount);
 

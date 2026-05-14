@@ -43,7 +43,9 @@ public class AuthController {
 
 		User user = User.builder().name(registrationDTO.getName()).email(registrationDTO.getEmail())
 				.password(registrationDTO.getPassword()).phone(registrationDTO.getPhone())
-				.image(registrationDTO.getImage()).role(registrationDTO.getRole()).build();
+				.image(registrationDTO.getImage()).role(registrationDTO.getRole())
+				.busOperatorId(registrationDTO.getBusOperatorId())
+				.build();
 
 		User savedUser = authService.registerUser(user);
 
@@ -85,6 +87,8 @@ public class AuthController {
 	// 🔁 MAPPER
 	private UserDTO mapToDTO(User user) {
 		return UserDTO.builder().id(user.getId()).name(user.getName()).email(user.getEmail()).phone(user.getPhone())
-				.image(user.getImage()).role(user.getRole()).isActive(user.getIsActive()).build();
+				.image(user.getImage()).role(user.getRole()).isActive(user.getIsActive())
+				.busOperatorId(user.getBusOperatorId())
+				.build();
 	}
 }

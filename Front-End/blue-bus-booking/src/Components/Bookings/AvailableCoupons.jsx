@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { Tag, Sparkles, Clock, ChevronRight, Gift } from 'lucide-react';
 
 const AvailableCoupons = ({ onSelect, bookingAmount }) => {
@@ -9,7 +9,7 @@ const AvailableCoupons = ({ onSelect, bookingAmount }) => {
   useEffect(() => {
     const fetchAvailableCoupons = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/api/coupons');
+        const response = await api.get('/api/coupons');
         if (response.data.success) {
           setCoupons(response.data.data || []);
         }

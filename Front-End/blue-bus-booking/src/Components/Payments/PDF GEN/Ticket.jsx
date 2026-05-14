@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bus, MapPin, Calendar, Clock, User, Armchair, QrCode } from 'lucide-react';
+import { API_BASE_URL } from '../../../api/axiosConfig';
 
 const Ticket = ({ booking }) => {
   if (!booking) return null;
@@ -104,7 +105,7 @@ const Ticket = ({ booking }) => {
       <div className="bg-slate-50 md:flex-1 p-8 flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-dashed border-gray-200">
         <div className="bg-white p-3 rounded-2xl shadow-sm mb-4 border border-gray-100 group hover:shadow-md transition-all hover:scale-105">
           <img 
-            src={`http://localhost:8080/api/ticket/qr/${booking.id}`} 
+            src={`${API_BASE_URL}/api/ticket/qr/${booking.id}`} 
             alt="Ticket QR Code"
             className="w-40 h-40 object-contain"
             onError={(e) => { e.target.src = "https://cdn-icons-png.flaticon.com/512/241/241528.png"; }}

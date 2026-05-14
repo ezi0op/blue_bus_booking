@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../../api/axiosConfig';
 import { Sparkles, Info, Heart, Layout, Award } from 'lucide-react';
 
 const SeatPreference = ({ userId }) => {
@@ -8,13 +8,10 @@ const SeatPreference = ({ userId }) => {
 
   useEffect(() => {
     const fetchPreference = async () => {
-      const token = localStorage.getItem('token');
-      if (!token || !userId) return;
+      if (!userId) return;
 
       try {
-        const response = await axios.get(`http://localhost:8080/api/seat-preference/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get(`/api/seat-preference/${userId}`);
 
         if (response.data.success) {
           setPreference(response.data.data);

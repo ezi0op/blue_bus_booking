@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { Search, Bus, Star, Mail, Phone, ShieldCheck, MapPin, Loader2, AlertCircle } from 'lucide-react';
 import BusOperatorRoute from './BusOperatorRoute';
 
@@ -21,7 +21,7 @@ const SearchBusOperator = () => {
     setSearched(true);
 
     try {
-      const res = await axios.get(`http://localhost:8080/api/operators/search/${searchTerm}`);
+      const res = await api.get(`/api/operators/search/${searchTerm}`);
       if (res.data.success) {
         setResults(res.data.data);
       }

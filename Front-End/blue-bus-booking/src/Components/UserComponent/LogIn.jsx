@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, LogIn as LogInIcon, AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import api from '../../api/axiosConfig';
 
 const LogIn = () => {
   const [email, setEmail] = useState('');
@@ -21,7 +21,7 @@ const LogIn = () => {
     setResendLoading(true);
     setResendMessage('');
     try {
-      await axios.post(`http://localhost:8080/api/auth/resend-verification?email=${email}`);
+      await api.post(`/api/auth/resend-verification?email=${email}`);
       setResendMessage('Verification email sent! Please check your inbox.');
       setError('');
     } catch (err) {
@@ -38,7 +38,7 @@ const LogIn = () => {
     setResendMessage('');
 
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', {
+      const response = await api.post('/api/auth/login', {
         email,
         password
       });
@@ -50,9 +50,8 @@ const LogIn = () => {
 
         // Fetch user details to get the role
         try {
-          const userResponse = await axios.get(`http://localhost:8080/api/auth/user-email/${email}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          // Note: Headers are now handled automatically by the axios interceptor
+          const userResponse = await api.get(`/api/auth/user-email/${email}`);
           
           if (userResponse.data.success) {
             const userData = userResponse.data.data;
@@ -64,20 +63,18 @@ const LogIn = () => {
             localStorage.setItem('userName', userData.name);
             localStorage.setItem('userImage', userData.image || '');
             localStorage.setItem('loginTimestamp', Date.now().toString());
+
+            if (userData.busOperatorId) {
+              localStorage.setItem('operatorId', userData.busOperatorId);
+            }
             
             // Auto-redirect based on role
             if (userRole === 'ADMIN') {
               navigate('/admin'); 
+            } else if (userRole === 'OPERATOR') {
+              navigate('/operator');
             } else {
-              // Check if there's a pending booking to resume
-              const pendingBooking = localStorage.getItem('pendingBooking');
-              if (pendingBooking) {
-                // If they have a pending booking, stay on/go to home 
-                // (where the search results usually are)
-                navigate('/');
-              } else {
-                navigate('/');
-              }
+              navigate('/');
             }
           }
         } catch (fetchError) {
@@ -175,13 +172,6 @@ const LogIn = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="text-sm">
-                <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-                  Forgot your password?
-                </a>
-              </div>
-            </div>
 
             <button
               type="submit"

@@ -27,7 +27,21 @@ public class DynamicPricingServiceImpl implements DynamicPricingService {
 
 	@Override
 	public BigDecimal calculateDynamicPrice(Trip trip) {
-		BigDecimal basePrice = trip.getPrice();
+		// 🔥 FIX: Always use basePrice to avoid iterative discounting bug
+		BigDecimal basePrice = trip.getBasePrice();
+		
+		if (basePrice == null || basePrice.compareTo(BigDecimal.valueOf(50)) < 0) {
+			// If basePrice is missing or ruined (like ₹4.04), we try to recover it from current price
+			// but only if current price is sane. If not, we set a temporary fallback.
+			if (trip.getPrice().compareTo(BigDecimal.valueOf(100)) > 0) {
+				basePrice = trip.getPrice();
+			} else {
+				// Fallback to a minimum price if both are ruined
+				basePrice = BigDecimal.valueOf(500); 
+			}
+			trip.setBasePrice(basePrice);
+		}
+		
 		double multi = 1.0;
 
 		// Rule 1 : occupany based pricing
@@ -82,18 +96,23 @@ public class DynamicPricingServiceImpl implements DynamicPricingService {
 	@Override
 	@Transactional
 	public void applyDynamicPricingToAllActiveTrips() {
+		// Fix: Fetch all trips from today onwards, not just based on time
+		List<Trip> activeTrips = tripRepository.findByStatusAndJourneyDateGreaterThanEqual(
+				TripStatus.SCHEDULED, java.time.LocalDate.now());
 
-		List<Trip> activeTrips = tripRepository.findByStatusAndDepartureTimeAfter(TripStatus.SCHEDULED,
-				LocalTime.now());
-
+		int count = 0;
 		for (Trip trip : activeTrips) {
-			BigDecimal newPrice = calculateDynamicPrice(trip);
-
-			trip.setPrice(newPrice);
-			tripRepository.save(trip);
+			try {
+				BigDecimal newPrice = calculateDynamicPrice(trip);
+				trip.setPrice(newPrice);
+				tripRepository.save(trip);
+				count++;
+			} catch (Exception e) {
+				log.error("Failed to apply dynamic pricing for trip ID {}: {}", trip.getId(), e.getMessage());
+			}
 		}
 
-		log.info("Dynamic pricing applied to {} trips", activeTrips.size());
+		log.info("Dynamic pricing successfully applied to {} trips out of {} active trips", count, activeTrips.size());
 	}
 
 }

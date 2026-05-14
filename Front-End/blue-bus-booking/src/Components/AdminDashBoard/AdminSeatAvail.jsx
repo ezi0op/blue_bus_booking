@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { 
   Settings, RefreshCw, ShieldAlert, 
   CheckCircle2, Clock, Zap
@@ -18,10 +18,8 @@ const AdminSeatAvail = () => {
   const handleReleaseLocks = async () => {
     setLoading(true);
     setSuccess(false);
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      await axios.put('http://localhost:8080/api/admin/seat-availability/release-expired-locks', {}, { headers });
+      await api.put('/api/admin/seat-availability/release-expired-locks', {});
       setSuccess(true);
       showMessage('Expired locks released successfully', 'success');
       setTimeout(() => setSuccess(false), 5000);

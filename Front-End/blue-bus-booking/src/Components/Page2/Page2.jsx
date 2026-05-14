@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../../api/axiosConfig'
 import RouteCard from './RouteCard/RouteCard'
 import { ArrowRight } from 'lucide-react'
 import ExploreRoute from './RouteCard/ExploreRoute'
@@ -14,7 +14,7 @@ const Page2 = () => {
   useEffect(() => {
     const fetchRoutes = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/api/routes')
+        const response = await api.get('/api/routes')
         setRoutes(response.data.data || [])
       } catch (err) {
         console.error('Error fetching routes:', err)

@@ -1,5 +1,6 @@
 package com.bluebus.booking.serviceImpl;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -76,7 +77,12 @@ public class TripServiceImpl implements TripService {
 		trip.setBus(bus);
 		
 		if (trip.getPrice() == null || trip.getPrice().compareTo(java.math.BigDecimal.ZERO) == 0) {
-			trip.setPrice(calculateFare(route.getDistance(), bus.getBusType()));
+			BigDecimal calculated = calculateFare(route.getDistance(), bus.getBusType());
+			trip.setPrice(calculated);
+			trip.setBasePrice(calculated);
+		} else {
+			// If price was manually set during creation, treat it as the base
+			trip.setBasePrice(trip.getPrice());
 		}
 
 		if (trip.getStatus() == null) {

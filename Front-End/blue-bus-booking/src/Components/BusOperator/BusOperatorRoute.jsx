@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { X, MapPin, Loader2, Navigation } from 'lucide-react';
 
 const BusOperatorRoute = ({ operator, onClose }) => {
@@ -15,7 +15,7 @@ const BusOperatorRoute = ({ operator, onClose }) => {
   const fetchRoutes = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`http://localhost:8080/api/operators/bus/${operator.id}/routes`);
+      const res = await api.get(`/api/operators/bus/${operator.id}/routes`);
       if (res.data.success) {
         setRoutes(res.data.data);
       }

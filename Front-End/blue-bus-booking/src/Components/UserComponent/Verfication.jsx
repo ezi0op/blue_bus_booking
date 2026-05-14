@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { CheckCircle2, XCircle, Loader2, ArrowRight, Mail, ShieldCheck, ArrowLeft } from 'lucide-react';
 
 const Verification = () => {
@@ -12,7 +12,7 @@ const Verification = () => {
   useEffect(() => {
     const verifyEmail = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/auth/verify/${token}`);
+        const response = await api.get(`/api/auth/verify/${token}`);
         setStatus('success');
         const msg = response.data || '';
         if (msg.toLowerCase().includes('already verified')) {

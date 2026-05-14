@@ -31,3 +31,20 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### IDE Metadata ###
+/.metadata/
+
+### Sensitive Files ###
+*.pem
+*.key
+*.jks
+.env
+
+### Logs ###
+*.log
+/logs
+
+### OS Specific ###
+.DS_Store
+Thumbs.db

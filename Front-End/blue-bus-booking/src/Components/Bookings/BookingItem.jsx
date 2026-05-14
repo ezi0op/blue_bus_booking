@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { User, Armchair, IndianRupee, Loader2, AlertCircle } from 'lucide-react';
 
 const BookingItem = ({ bookingId }) => {
@@ -13,9 +13,7 @@ const BookingItem = ({ bookingId }) => {
       if (!token) return;
 
       try {
-        const response = await axios.get(`http://localhost:8080/api/booking-items/booking/${bookingId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get(`/api/booking-items/booking/${bookingId}`);
 
         if (response.data.success) {
           setItems(response.data.data || []);

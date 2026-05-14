@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../../api/axiosConfig';
 import { X, MapPin, Clock, Navigation, Zap, Loader2, Calendar } from 'lucide-react';
 import StopMap from '../StopMap/StopMap';
 
@@ -13,7 +13,7 @@ const ExploreRoute = ({ route, isOpen, onClose }) => {
       const fetchStops = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(`http://localhost:8080/api/maps/routes/${route.id}/stops`);
+          const response = await api.get(`/api/maps/routes/${route.id}/stops`);
           setStops(response.data.data || []);
           setError(null);
         } catch (err) {

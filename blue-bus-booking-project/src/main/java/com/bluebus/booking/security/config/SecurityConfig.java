@@ -37,6 +37,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
  */
 @Configuration
 @EnableWebSecurity
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 public class SecurityConfig {
 
 	@Autowired
@@ -62,8 +63,9 @@ public class SecurityConfig {
 						.requestMatchers("/api/seat-availability/layout/**").permitAll()
 						.requestMatchers("/api/ticket/qr/**").permitAll()
 
-						// 🔒 Admin endpoints - ADMIN role required
+						// 🔒 Admin & Operator endpoints
 						.requestMatchers("/api/admin/**").hasRole("ADMIN")
+						.requestMatchers("/api/operator/**").hasAnyRole("OPERATOR", "ADMIN")
 
 						// 🔒 Authenticated user endpoints
 						.requestMatchers("/api/bookings/**").authenticated()
@@ -110,7 +112,15 @@ public class SecurityConfig {
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration configuration = new CorsConfiguration();
 		configuration.setAllowedOrigins(
-				Arrays.asList("http://localhost:3000", "http://localhost:4200", "http://127.0.0.1:3000", "http://localhost:5173"));
+				Arrays.asList(
+					"http://localhost:3000", 
+					"http://localhost:4200", 
+					"http://127.0.0.1:3000", 
+					"http://localhost:5173",
+					"https://bluebusbooking.duckdns.org",
+					"https://bluebusbooking.vercel.app",
+					"https://bluebusfront-end.vercel.app"
+				));
 		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(Arrays.asList("*"));
 		configuration.setAllowCredentials(true);

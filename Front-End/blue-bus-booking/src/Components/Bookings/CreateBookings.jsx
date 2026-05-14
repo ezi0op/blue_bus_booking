@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { User, Mail, Phone, Calendar, ArrowLeft, Ticket, CreditCard, ChevronRight, AlertCircle, CheckCircle2, Tag, X } from 'lucide-react';
 import Coupons from './Coupons';
@@ -117,9 +117,7 @@ const CreateBookings = ({ tripId, price, selectedSeats, onBack, onRemoveSeat }) 
     };
 
     try {
-      const response = await axios.post('http://localhost:8080/api/bookings', bookingRequest, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.post('/api/bookings', bookingRequest);
 
       if (response.data.success) {
         const bookingId = response.data.data.id;
@@ -127,10 +125,8 @@ const CreateBookings = ({ tripId, price, selectedSeats, onBack, onRemoveSeat }) 
         if (paymentMethod === 'CASH' || paymentMethod === 'UNKNOWN') {
           // Process offline payment directly
           try {
-            await axios.post(`http://localhost:8080/api/payments/offline?paymentMethod=${paymentMethod}`, {
+            await api.post(`/api/payments/offline?paymentMethod=${paymentMethod}`, {
               bookingId: bookingId
-            }, {
-              headers: { Authorization: `Bearer ${token}` }
             });
             localStorage.removeItem('pendingBooking');
             localStorage.removeItem('lastSearch');

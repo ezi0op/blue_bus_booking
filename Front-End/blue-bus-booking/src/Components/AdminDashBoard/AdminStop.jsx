@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { 
   MapPin, Plus, Edit2, X, Check,
   ChevronRight, Clock,
@@ -40,10 +40,8 @@ const AdminStop = () => {
   };
 
   const fetchRoutes = async () => {
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      const res = await axios.get('http://localhost:8080/api/routes', { headers });
+      const res = await api.get('/api/routes');
       setRoutes(res.data.data || []);
       if (res.data.data?.length > 0) setSelectedRouteId(res.data.data[0].id);
     } catch (err) {
@@ -53,10 +51,8 @@ const AdminStop = () => {
 
   const fetchStops = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      const res = await axios.get(`http://localhost:8080/api/stops/route/${selectedRouteId}`, { headers });
+      const res = await api.get(`/api/stops/route/${selectedRouteId}`);
       setStops((res.data.data || []).sort((a, b) => a.sequenceOrder - b.sequenceOrder));
     } catch (err) {
       console.error('Error fetching stops:', err);
@@ -67,8 +63,6 @@ const AdminStop = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
       // Ensure times are in HH:mm:ss format
       const formattedArrivalTime = formData.arrivalTime?.length === 5 ? `${formData.arrivalTime}:00` : formData.arrivalTime;
@@ -81,10 +75,10 @@ const AdminStop = () => {
         route: { id: selectedRouteId } 
       };
       if (editingItem) {
-        await axios.put(`http://localhost:8080/api/admin/stops/${editingItem.id}`, data, { headers });
+        await api.put(`/api/admin/stops/${editingItem.id}`, data);
         showMessage('Stop updated successfully', 'success');
       } else {
-        await axios.post('http://localhost:8080/api/admin/stops', data, { headers });
+        await api.post('/api/admin/stops', data);
         showMessage('Stop created successfully', 'success');
       }
       setShowModal(false);
@@ -95,10 +89,8 @@ const AdminStop = () => {
   };
 
   const handleDeactivate = async () => {
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      await axios.put(`http://localhost:8080/api/admin/stops/${deactivatingStopId}/deactivate`, {}, { headers });
+      await api.put(`/api/admin/stops/${deactivatingStopId}/deactivate`, {});
       showMessage('Stop deactivated successfully', 'success');
       setShowDeactivateModal(false);
       fetchStops();

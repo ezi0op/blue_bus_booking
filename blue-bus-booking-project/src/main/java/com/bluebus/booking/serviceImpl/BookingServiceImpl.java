@@ -118,7 +118,23 @@ public class BookingServiceImpl implements BookingService {
 		
 		booking.setBookingItems(items);
 		booking = bookingRepository.save(booking);
-		emailService.sendBookingConfirmation(booking);
+		
+		// 📧 Send email with explicit strings (avoid lazy loading issues in async)
+		emailService.sendBookingConfirmation(
+				booking.getContactEmail(), 
+				booking.getBookingReference(), 
+				booking.getTrip().getRoute().getSource(), 
+				booking.getTrip().getRoute().getDestination(), 
+				booking.getTrip().getJourneyDate().toString()
+		);
+
+		// 🔥 CRITICAL: Eagerly load fields for the controller DTO mapping 
+		// because the transaction ends here and Hibernate session will close.
+		booking.getBookingItems().forEach(item -> {
+			item.getSeat().getSeatNumber(); // Load seat
+		});
+		booking.getUser().getName(); // Load user
+		booking.getTrip().getId(); // Load trip
 
 		return booking;
 	}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { 
   Users, Search, UserCheck, UserMinus, 
   Trash2, Mail, Phone, Shield, 
@@ -27,10 +27,8 @@ const AdminUser = () => {
   };
 
   const fetchUsers = async () => {
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      const response = await axios.get('http://localhost:8080/api/admin/users/', { headers });
+      const response = await api.get('/api/admin/users/');
       setUsers(response.data.data || []);
     } catch (err) {
       console.error('Error fetching users:', err);
@@ -41,10 +39,8 @@ const AdminUser = () => {
 
   const toggleStatus = async (id, currentStatus) => {
     setActionLoading(id);
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      await axios.get(`http://localhost:8080/api/admin/users/${id}/status?active=${!currentStatus}`, { headers });
+      await api.get(`/api/admin/users/${id}/status?active=${!currentStatus}`);
       setUsers(users.map(u => u.id === id ? { ...u, isActive: !currentStatus } : u));
       showMessage('User status updated successfully', 'success');
     } catch (err) {
@@ -56,10 +52,8 @@ const AdminUser = () => {
 
   const handleDeleteUser = async () => {
     setActionLoading(selectedUserId);
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      await axios.delete(`http://localhost:8080/api/admin/users/${selectedUserId}`, { headers });
+      await api.delete(`/api/admin/users/${selectedUserId}`);
       setUsers(users.filter(u => u.id !== selectedUserId));
       showMessage('User deleted successfully', 'success');
     } catch (err) {

@@ -20,6 +20,7 @@ public class UserDTO {
 	private String image;
 	private Boolean isActive;
 	private Role role;
+	private Long busOperatorId;
 	
 	
 }

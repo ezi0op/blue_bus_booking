@@ -26,6 +26,8 @@ public class TripRecommendationDTO {
     private String busImage;
    
     private int availableSeats;
+    private Long routeId;
+    private Long busId;
     private String recommendationReason;
     private double matchScore;
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { 
   CalendarClock, Plus, Edit2, X, Check,
   Calendar, Clock, AlertTriangle, Map, MapPin,
@@ -31,13 +31,11 @@ const AdminTrip = () => {
   }, [view]);
 
   const fetchOptions = async () => {
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     setFetchingOptions(true);
     try {
       const [routesRes, busesRes] = await Promise.all([
-        axios.get('http://localhost:8080/api/routes', { headers }),
-        axios.get('http://localhost:8080/api/buses', { headers })
+        api.get('/api/routes'),
+        api.get('/api/buses')
       ]);
       setAvailableRoutes(routesRes.data.data || []);
       setAvailableBuses(busesRes.data.data || []);
@@ -55,14 +53,12 @@ const AdminTrip = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
       if (view === 'trips') {
-        const res = await axios.get('http://localhost:8080/api/trips', { headers });
+        const res = await api.get('/api/trips');
         setTrips(res.data.data || []);
       } else {
-        const res = await axios.get('http://localhost:8080/api/routes', { headers });
+        const res = await api.get('/api/routes');
         setRoutes(res.data.data || []);
       }
     } catch (err) {
@@ -75,10 +71,8 @@ const AdminTrip = () => {
 
   const handleAdminCancel = async () => {
     if (!cancelReason.trim()) return;
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      await axios.put(`http://localhost:8080/api/admin/trips/${selectedTripId}/admin-cancel`, { reason: cancelReason }, { headers });
+      await api.put(`/api/admin/trips/${selectedTripId}/admin-cancel`, { reason: cancelReason });
       setShowCancelModal(false);
       setCancelReason('');
       fetchData();
@@ -90,8 +84,6 @@ const AdminTrip = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     
     // Prepare data with correct time formats
     const submissionData = { ...formData };
@@ -109,12 +101,12 @@ const AdminTrip = () => {
     }
 
     try {
-      const baseUrl = `http://localhost:8080/api/admin/${view}`;
+      const endpoint = `/api/admin/${view}`;
       if (editingItem) {
-        await axios.put(`${baseUrl}/${editingItem.id}`, submissionData, { headers });
+        await api.put(`${endpoint}/${editingItem.id}`, submissionData);
         showMessage(`${view.slice(0, -1)} updated successfully`, 'success');
       } else {
-        await axios.post(baseUrl, submissionData, { headers });
+        await api.post(endpoint, submissionData);
         showMessage(`${view.slice(0, -1)} established successfully`, 'success');
       }
       setShowModal(false);

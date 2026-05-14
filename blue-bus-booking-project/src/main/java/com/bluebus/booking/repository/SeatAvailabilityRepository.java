@@ -18,6 +18,7 @@ public interface SeatAvailabilityRepository extends JpaRepository<SeatAvailabili
 
 	List<SeatAvailability> findByIsLockedTrueAndLockExpiryTimeBefore(LocalDateTime now);
 
+	@org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "seat" })
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("Select s From  SeatAvailability s Where s.trip.id= :tripId and s.seat.id= :seatId ")
 	Optional<SeatAvailability> findWithLock(Long tripId, Long seatId);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { 
   LayoutDashboard, Ticket, Percent, 
   Wallet, Users, BrainCircuit, Star, 
@@ -22,21 +22,19 @@ const AdminDashBoard = () => {
   const fetchTabData = async () => {
     setLoading(true);
     setError(null);
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
 
     try {
       if (activeTab === 'overview') {
         const [sumRes, anaRes] = await Promise.all([
-          axios.get('http://localhost:8080/api/admin/dashboard/summary', { headers }),
-          axios.get('http://localhost:8080/api/admin/dashboard/ai-analytics', { headers })
+          api.get('/api/admin/dashboard/summary'),
+          api.get('/api/admin/dashboard/ai-analytics')
         ]);
         setData(prev => ({ ...prev, summary: sumRes.data.data, analytics: anaRes.data.data }));
       } else if (activeTab === 'bookings') {
-        const res = await axios.get('http://localhost:8080/api/admin/bookings', { headers });
+        const res = await api.get('/api/admin/bookings');
         setData(prev => ({ ...prev, bookings: res.data.data || [] }));
       } else if (activeTab === 'coupons') {
-        const res = await axios.get('http://localhost:8080/api/admin/coupons', { headers });
+        const res = await api.get('/api/admin/coupons');
         setData(prev => ({ ...prev, coupons: res.data.data || [] }));
       }
     } catch (err) {
@@ -77,7 +75,7 @@ const AdminDashBoard = () => {
         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm">
           <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mb-4"><Zap size={24} /></div>
           <p className="text-sm font-black text-slate-900 mb-2">{error}</p>
-          <p className="text-xs text-slate-400 font-medium italic">Please check if the backend is running at :8080 and you are logged in.</p>
+          <p className="text-xs text-slate-400 font-medium italic">Please check your internet connection and ensure you are logged in with admin privileges.</p>
           <button onClick={fetchTabData} className="mt-6 px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Retry Connection</button>
         </div>
       ) : activeTab === 'overview' ? (

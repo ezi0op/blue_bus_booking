@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { 
   Ticket, Search, X, AlertTriangle,
   Check, User, Calendar, DollarSign,
@@ -32,10 +32,8 @@ const AdminBooking = () => {
 
   const fetchBookings = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      const res = await axios.get('http://localhost:8080/api/admin/bookings', { headers });
+      const res = await api.get('/api/admin/bookings');
       setBookings(res.data.data || []);
     } catch (err) {
       showMessage('Failed to load bookings');
@@ -45,10 +43,8 @@ const AdminBooking = () => {
   };
 
   const handleCancel = async () => {
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      await axios.put(`http://localhost:8080/api/admin/bookings/${selectedBookingId}/cancel`, {}, { headers });
+      await api.put(`/api/admin/bookings/${selectedBookingId}/cancel`, {});
       showMessage('Booking cancelled successfully', 'success');
       setShowCancelModal(false);
       fetchBookings();

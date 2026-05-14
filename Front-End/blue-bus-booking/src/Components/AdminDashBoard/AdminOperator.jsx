@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { 
   Activity, Plus, Edit2, Power, 
   PowerOff, Mail, Phone, Shield, X, Check,
@@ -32,10 +32,8 @@ const AdminOperator = () => {
 
   const fetchOperators = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      const response = await axios.get('http://localhost:8080/api/operators', { headers });
+      const response = await api.get('/api/admin/operators');
       setOperators(response.data.data || []);
     } catch (err) {
       console.error('Error fetching operators:', err);
@@ -46,10 +44,8 @@ const AdminOperator = () => {
   };
 
   const handleToggleStatus = async (id) => {
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      await axios.put(`http://localhost:8080/api/admin/operators/${id}/deactivate`, {}, { headers });
+      await api.put(`/api/admin/operators/${id}/deactivate`, {});
       fetchOperators();
       showMessage('Partner operational status synchronized', 'success');
     } catch (err) {
@@ -59,14 +55,12 @@ const AdminOperator = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
       if (editingItem) {
-        await axios.put(`http://localhost:8080/api/admin/operators/${editingItem.id}`, formData, { headers });
+        await api.put(`/api/admin/operators/${editingItem.id}`, formData);
         showMessage('Partner credentials updated', 'success');
       } else {
-        await axios.post('http://localhost:8080/api/admin/operators', formData, { headers });
+        await api.post('/api/admin/operators', formData);
         showMessage('New fleet partner established', 'success');
       }
       setShowModal(false);

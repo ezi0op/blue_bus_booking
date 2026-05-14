@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { 
   Bus, Plus, Edit2, Power, 
   PowerOff, Landmark, X, Check, Image as ImageIcon
@@ -26,11 +26,9 @@ const AdminBus = () => {
   }, []);
 
   const fetchOptions = async () => {
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     setFetchingOptions(true);
     try {
-      const res = await axios.get('http://localhost:8080/api/operators', { headers });
+      const res = await api.get('/api/operators');
       setOperators(res.data.data || []);
     } catch (err) {
       console.error('Error fetching operators:', err);
@@ -46,10 +44,8 @@ const AdminBus = () => {
 
   const fetchBuses = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      const response = await axios.get('http://localhost:8080/api/buses', { headers });
+      const response = await api.get('/api/buses');
       setBuses(response.data.data || []);
     } catch (err) {
       console.error('Error fetching buses:', err);
@@ -59,10 +55,8 @@ const AdminBus = () => {
   };
 
   const handleToggleStatus = async (id) => {
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      await axios.put(`http://localhost:8080/api/admin/buses/${id}/deactivate`, {}, { headers });
+      await api.put(`/api/admin/buses/${id}/deactivate`, {});
       fetchBuses();
       showMessage('Bus status updated', 'success');
     } catch (err) {
@@ -72,14 +66,12 @@ const AdminBus = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
       if (editingItem) {
-        await axios.put(`http://localhost:8080/api/admin/buses/${editingItem.id}`, formData, { headers });
+        await api.put(`/api/admin/buses/${editingItem.id}`, formData);
         showMessage('Bus updated successfully', 'success');
       } else {
-        await axios.post('http://localhost:8080/api/admin/buses', formData, { headers });
+        await api.post('/api/admin/buses', formData);
         showMessage('Bus created successfully', 'success');
       }
       setShowModal(false);

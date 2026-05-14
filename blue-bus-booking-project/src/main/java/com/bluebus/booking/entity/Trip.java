@@ -85,6 +85,9 @@ public class Trip {
 	@Column(nullable = false, precision = 10, scale = 2)
 	private BigDecimal price;
 
+	@Column(precision = 10, scale = 2)
+	private BigDecimal basePrice;
+
 	@Min(0)
 	@Column(nullable = false)
 	private Integer totalSeats = 0;

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-import axios from 'axios'
+import api from '../../../api/axiosConfig'
 import BusOperatorInfo from '../../BusOperator/BusOperatorInfo'
 import StopMap from '../../Page2/StopMap/StopMap'
 import Page2 from '../../Page2/Page2'
 import SeatLayout from '../../Page2/SeatLayout/SeatLayout'
 import middleImg from '../../../assets/middle.png'
 import TripResultCard from '../../Page2/TripResultCard'
-import { Bus, Ticket, Armchair, ShieldCheck, Sofa, Zap, MapPin, CalendarDays, Search, Clock, Map as MapIcon, ChevronDown, ChevronUp, MapPin as StopIcon, ArrowLeftRight } from 'lucide-react'
+import { MapPin, ArrowLeftRight, Search, Calendar, CalendarDays, Ticket, ShieldCheck, Bus, Armchair, Sofa, Zap, Clock, Map as MapIcon, ChevronDown, ChevronUp, MapPin as StopIcon } from 'lucide-react';
 
 const Middle = () => {
   const location = useLocation();
@@ -39,7 +39,7 @@ const Middle = () => {
         const performRestore = async () => {
           setLoading(true);
           try {
-            const response = await axios.post('http://localhost:8080/api/trips/search', {
+            const response = await api.post('/api/trips/search', {
               source: savedFrom,
               destination: savedTo,
               date: savedDate
@@ -97,7 +97,7 @@ const Middle = () => {
       localStorage.setItem('lastSearch', JSON.stringify({ from, to, date }));
 
       // Search for specific TRIPS
-      const response = await axios.post('http://localhost:8080/api/trips/search', {
+      const response = await api.post('/api/trips/search', {
         source: from,
         destination: to,
         date: date
@@ -125,7 +125,7 @@ const Middle = () => {
     if (!stopsData[routeId]) {
       try {
         setLoadingStops(true);
-        const res = await axios.get(`http://localhost:8080/api/stops/route/${routeId}`);
+        const res = await api.get(`/api/stops/route/${routeId}`);
         if (res.data.success) {
           setStopsData(prev => ({ ...prev, [routeId]: res.data.data }));
         }
@@ -145,46 +145,38 @@ const Middle = () => {
           <img src={middleImg} alt="Blue Bus Hero" className="absolute inset-0 w-full h-full object-cover object-[75%_center]" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(13,38,148,0.95) 0%, rgba(13,38,148,0.7) 35%, rgba(13,38,148,0) 65%, transparent 100%)' }}></div>
 
-          <div className="relative z-10 flex flex-col justify-center h-full px-8 md:px-16 lg:px-24 pb-24">
-            <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/30 text-white text-sm font-medium px-4 py-1.5 rounded-full mb-6 w-fit">
-              <Bus size={16} />
+          <div className="relative z-10 flex flex-col justify-center md:justify-center h-full px-6 md:px-16 lg:px-24 pt-20 md:pb-24">
+            <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/30 text-white text-[10px] md:text-sm font-medium px-4 py-1.5 rounded-full mb-4 md:mb-6 w-fit">
+              <Bus size={14} />
               <span>Smart Booking, Happy Journey</span>
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight mb-4 drop-shadow-xl" style={{ maxWidth: '520px' }}>
+            <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-4 drop-shadow-2xl max-w-[280px] md:max-w-[520px]">
               Your Journey<br />Starts Here
             </h1>
 
-            <p className="text-white/90 text-sm md:text-lg leading-relaxed mb-10 drop-shadow-lg" style={{ maxWidth: '420px' }}>
-              Book bus tickets easily and travel comfortably<br className="hidden sm:block" />across the country with BlueBus.
+            <p className="text-white/80 text-sm md:text-lg font-medium leading-relaxed mb-10 drop-shadow-lg max-w-[260px] md:max-w-[420px]">
+              Book bus tickets easily and travel comfortably across the country.
             </p>
 
-            <div className="flex flex-wrap gap-8">
+            {/* Features - Hidden on very small mobiles to keep it clean */}
+            <div className="hidden sm:flex flex-wrap gap-6 md:gap-8">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 flex items-center justify-center bg-white/15 border border-white/25 rounded-lg flex-shrink-0 shadow-lg backdrop-blur-md">
+                <div className="w-10 h-10 flex items-center justify-center bg-white/10 border border-white/20 rounded-xl flex-shrink-0 backdrop-blur-md">
                   <Ticket size={20} className="text-white" />
                 </div>
-                <div className="drop-shadow-md">
+                <div className="hidden md:block">
                   <p className="text-white font-bold text-sm">Easy Booking</p>
-                  <p className="text-white/80 text-xs leading-snug mt-0.5">Book in just<br />a few clicks</p>
+                  <p className="text-white/60 text-[10px] mt-0.5">Book in seconds</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 flex items-center justify-center bg-white/15 border border-white/25 rounded-lg flex-shrink-0 shadow-lg backdrop-blur-md">
-                  <Armchair size={20} className="text-white" />
-                </div>
-                <div className="drop-shadow-md">
-                  <p className="text-white font-bold text-sm">Comfortable Seats</p>
-                  <p className="text-white/80 text-xs leading-snug mt-0.5">Travel in comfort<br />and style</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 flex items-center justify-center bg-white/15 border border-white/25 rounded-lg flex-shrink-0 shadow-lg backdrop-blur-md">
+                <div className="w-10 h-10 flex items-center justify-center bg-white/10 border border-white/20 rounded-xl flex-shrink-0 backdrop-blur-md">
                   <ShieldCheck size={20} className="text-white" />
                 </div>
-                <div className="drop-shadow-md">
-                  <p className="text-white font-bold text-sm">Safe &amp; Secure</p>
-                  <p className="text-white/80 text-xs leading-snug mt-0.5">Your safety is<br />our priority</p>
+                <div className="hidden md:block">
+                  <p className="text-white font-bold text-sm">Safe Travel</p>
+                  <p className="text-white/60 text-[10px] mt-0.5">Priority safety</p>
                 </div>
               </div>
             </div>
@@ -194,41 +186,48 @@ const Middle = () => {
 
       {/* ── Search Bar Section ── */}
       {searchResults === null && !error && (
-        <div className="relative z-20 flex justify-center w-full px-4 md:px-8 -mt-40 mb-10">
-          <div className="w-full max-w-5xl bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] p-6">
-            <div className="flex flex-col md:flex-row items-end gap-6">
-              <div className="flex-1 flex flex-col gap-1 w-full">
+        <div className="relative z-20 flex justify-center w-full px-4 md:px-8 mt-[-2rem] md:-mt-40 mb-16 animate-in slide-in-from-bottom-10 duration-1000">
+          <div className="w-full max-w-5xl bg-white rounded-[2rem] shadow-[0_20px_70px_rgba(0,0,0,0.1)] p-6 md:p-8 border border-gray-50">
+            <div className="flex flex-col md:flex-row items-center md:items-end gap-5 md:gap-2 w-full">
+              {/* From Column */}
+              <div className="flex-1 flex flex-col gap-1 w-full relative">
                 <label className="text-sm font-semibold text-gray-600">From</label>
                 <div className="relative">
                   <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" />
-                  <input type="text" value={from} onChange={(e) => setFrom(e.target.value)} placeholder="Starting City" className="w-full uppercase border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
+                  <input type="text" value={from} onChange={(e) => setFrom(e.target.value)} placeholder="Starting City" className="w-full uppercase border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-700 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all" />
                 </div>
               </div>
 
+              {/* Swap Button (Mobile: Between, Desktop: Between) */}
+              <div className="flex items-center justify-center z-30 -my-3 md:my-0 md:-mx-3">
+                <button 
+                  onClick={handleSwap} 
+                  type="button" 
+                  className="bg-white border border-gray-200 p-3 rounded-full shadow-md hover:shadow-lg hover:border-blue-400 hover:text-blue-600 transition-all active:scale-90 flex items-center justify-center group"
+                >
+                  <ArrowLeftRight size={16} className="rotate-90 md:rotate-0 group-hover:scale-110 transition-transform" />
+                </button>
+              </div>
+
+              {/* To Column */}
               <div className="flex-1 flex flex-col gap-1 w-full relative">
-                <button onClick={handleSwap} type="button" className="absolute -left-[1.85rem] top-[64%] -translate-y-1/2 z-30 bg-white border border-gray-200 p-2.5 rounded-full shadow-md hover:shadow-lg hover:border-blue-400 hover:text-blue-600 transition-all active:scale-90 hidden md:flex items-center justify-center"><ArrowLeftRight size={14} /></button>
                 <label className="text-sm font-semibold text-gray-600">To</label>
                 <div className="relative">
                   <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" />
-                  <input type="text" value={to} onChange={(e) => setTo(e.target.value)} placeholder="Destination City" className="w-full uppercase border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" />
+                  <input type="text" value={to} onChange={(e) => setTo(e.target.value)} placeholder="Destination City" className="w-full uppercase border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-700 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all" />
                 </div>
               </div>
 
+              {/* Date Column */}
               <div className="flex-1 flex flex-col gap-1 w-full">
                 <label className="text-sm font-semibold text-gray-600">Date</label>
                 <div className="relative">
-                  <CalendarDays size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input 
-                    type="date" 
-                    value={date} 
-                    min={new Date().toISOString().split('T')[0]}
-                    onChange={(e) => setDate(e.target.value)} 
-                    className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-600 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition" 
-                  />
+                  <Calendar size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" />
+                  <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3.5 text-gray-700 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white transition-all" />
                 </div>
               </div>
 
-              <button onClick={handleSearch} disabled={loading} className="w-full md:w-auto flex items-center justify-center bg-[#1d4ed8] hover:bg-blue-800 active:scale-95 text-white font-bold text-[15px] px-10 py-3.5 rounded-lg shadow transition-all duration-200 disabled:bg-blue-400">
+              <button onClick={handleSearch} disabled={loading} className="w-full md:w-auto h-[54px] flex items-center justify-center bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-[15px] px-10 rounded-xl shadow-lg shadow-blue-200 transition-all duration-200 disabled:bg-blue-400">
                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" /> : null}
                 {loading ? 'Searching...' : 'Search Buses'}
               </button>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 import { 
   Armchair, Plus, Edit2, Power, 
   PowerOff, Search, X, Check,
@@ -35,12 +35,10 @@ const AdminSeat = () => {
 
   const fetchInitialData = async () => {
     setLoading(true);
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
       const [busRes, seatRes] = await Promise.all([
-        axios.get('http://localhost:8080/api/buses', { headers }),
-        axios.get('http://localhost:8080/api/seats', { headers })
+        api.get('/api/buses'),
+        api.get('/api/seats')
       ]);
       setBuses(busRes.data.data || []);
       setSeats(seatRes.data.data || []);
@@ -52,11 +50,9 @@ const AdminSeat = () => {
   };
 
   const handleToggleStatus = async (id) => {
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     try {
-      await axios.put(`http://localhost:8080/api/admin/seats/${id}/deactivate`, {}, { headers });
-      const seatRes = await axios.get('http://localhost:8080/api/seats', { headers });
+      await api.put(`/api/admin/seats/${id}/deactivate`, {});
+      const seatRes = await api.get('/api/seats');
       setSeats(seatRes.data.data || []);
       showMessage('Seat status updated', 'success');
     } catch (err) {
@@ -70,9 +66,6 @@ const AdminSeat = () => {
       showMessage('Please select a bus first');
       return;
     }
-
-    const token = localStorage.getItem('token');
-    const headers = { Authorization: `Bearer ${token}` };
     
     // THE FIX: Explicitly structure the bus object with a numeric ID
     const dataToSend = {
@@ -87,7 +80,7 @@ const AdminSeat = () => {
     };
 
     try {
-      await axios.post('http://localhost:8080/api/admin/seats', dataToSend, { headers });
+      await api.post('/api/admin/seats', dataToSend);
       setShowModal(false);
       await fetchInitialData(); 
       showMessage('Seat deployed successfully', 'success');

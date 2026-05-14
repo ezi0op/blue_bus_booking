@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from '../../api/axiosConfig';
 
 /**
  * Helper to load Razorpay script dynamically
@@ -18,7 +18,6 @@ const loadRazorpayScript = () => {
  * @param {Object} options - { bookingId, amount, userEmail, userPhone, paymentMethod, onSuccess, onError }
  */
 export const handlePayment = async ({ bookingId, amount, userEmail, userPhone, paymentMethod, onSuccess, onError }) => {
-  const token = localStorage.getItem('token');
   
   try {
     // 1. Load Razorpay Script
@@ -29,16 +28,12 @@ export const handlePayment = async ({ bookingId, amount, userEmail, userPhone, p
     }
 
     // 2. Get Razorpay Config (Key ID)
-    const configRes = await axios.get('http://localhost:8080/api/payments/config', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const configRes = await api.get('/api/payments/config');
     const keyId = configRes.data.data.keyId;
 
     // 3. Create Razorpay Order in Backend
-    const orderRes = await axios.post('http://localhost:8080/api/payments/create-order', {
+    const orderRes = await api.post('/api/payments/create-order', {
       bookingId: bookingId
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
     });
 
     const orderData = orderRes.data.data;
@@ -55,13 +50,11 @@ export const handlePayment = async ({ bookingId, amount, userEmail, userPhone, p
       handler: async (response) => {
         // Payment successful - Verify with backend
         try {
-          const verifyRes = await axios.post('http://localhost:8080/api/payments/verify', {
+          const verifyRes = await api.post('/api/payments/verify', {
             razorpayOrderId: response.razorpay_order_id,
             razorpayPaymentId: response.razorpay_payment_id,
             razorpaySignature: response.razorpay_signature,
             paymentMethod: paymentMethod || "UPI"
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
           });
 
           if (verifyRes.data.success) {
@@ -88,10 +81,8 @@ export const handlePayment = async ({ bookingId, amount, userEmail, userPhone, p
         ondismiss: async () => {
           // Handle payment cancellation
           try {
-             await axios.post('http://localhost:8080/api/payments/failed', {
+             await api.post('/api/payments/failed', {
                 razorpayOrderId: orderData.razorpayOrderId
-             }, {
-                headers: { Authorization: `Bearer ${token}` }
              });
           } catch (e) {
              // Silent error
@@ -106,11 +97,9 @@ export const handlePayment = async ({ bookingId, amount, userEmail, userPhone, p
     rzp.on('payment.failed', async (response) => {
       // Payment failed
       try {
-        await axios.post('http://localhost:8080/api/payments/failed', {
+        await api.post('/api/payments/failed', {
           razorpayOrderId: response.error.metadata.order_id,
           razorpayPaymentId: response.error.metadata.payment_id
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
         });
       } catch (err) {
         // Silent error
