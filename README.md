@@ -23,7 +23,7 @@ A comprehensive Spring Boot REST API for managing online bus ticket booking oper
 
 ## 🎯 Project Overview
 
-The Blue Bus Booking Project is a full-featured backend application designed to manage online bus ticket booking. It handles bus operations management, route management, trip scheduling, real-time seat availability, booking operations, and user management with JWT-based authentication and AI-powered recommendations.
+The Blue Bus Booking Project is a full-featured backend application designed to manage online bus ticket booking. It handles bus management, route management, trip scheduling, real-time seat availability, booking operations, and user management with JWT-based authentication and AI-powered recommendations.
 
 **Key Capabilities:**
 - Multi-user booking platform
@@ -39,7 +39,7 @@ The Blue Bus Booking Project is a full-featured backend application designed to 
 - **User Management** - Registration, login, profile management with **URL-based profile photos**
 - **Authentication & Authorization** - JWT-based authentication with token blacklisting
 - **Security** - Secure **Change Password** flow within the profile section
-- **Bus & Operator Management** - Manage bus details, operators, and their operations
+- **Bus Management** - Manage bus details, routes, trips, coupons, and related operations
 - **Route Management** - Define and manage bus routes with stops
 - **Trip Management** - Schedule and manage bus trips with pricing and availability
 - **Booking System** - Create, confirm, and cancel bookings with multi-passenger support
@@ -49,10 +49,10 @@ The Blue Bus Booking Project is a full-featured backend application designed to 
 
 ### Advanced Features
 - **AI-Powered Chatbot** - Natural language chat interface for booking assistance
-- **Smart Search** - AI-driven trip search using natural language processing
+- **Smart Search** - Filter-based trip search with AI-assisted recommendations
 - **Seat Preferences** - AI learns user preferences and suggests optimal seats
 - **Recommendation Engine** - Personalized trip recommendations based on behavior
-- **Dynamic Pricing** - Intelligent pricing based on demand and availability
+- **Dynamic Pricing** - Intelligent pricing based on demand and availability, using a stored `basePrice` as the pricing anchor
 - **Advanced Filters** - Search trips by date, price range, departure time, bus type
 
 ## 🛠️ Tech Stack
@@ -415,7 +415,6 @@ The system uses JWT (JSON Web Tokens) for stateless authentication. Most endpoin
 
 **Bus Operations**
 - **Bus** - Bus details and specifications
-- **BusOperator** - Bus company information
 - **Route** - Bus routes
 - **Stop** - Individual stops on routes
 
@@ -439,7 +438,6 @@ User → ChatMessage
 Bus → Seat
 Bus → Trip
 Trip → SeatAvailability
-BusOperator → Bus
 Route → Stop
 Trip → Booking
 ```
@@ -624,3 +622,4 @@ For issues or questions:
 ---
 
 **Questions?** Refer to the documentation sections above or check the code comments for implementation details.
+

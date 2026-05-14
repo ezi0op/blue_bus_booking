@@ -27,7 +27,21 @@ public class DynamicPricingServiceImpl implements DynamicPricingService {
 
 	@Override
 	public BigDecimal calculateDynamicPrice(Trip trip) {
-		BigDecimal basePrice = trip.getPrice();
+		// 🔥 FIX: Always use basePrice to avoid iterative discounting bug
+		BigDecimal basePrice = trip.getBasePrice();
+		
+		if (basePrice == null || basePrice.compareTo(BigDecimal.valueOf(50)) < 0) {
+			// If basePrice is missing or ruined (like ₹4.04), we try to recover it from current price
+			// but only if current price is sane. If not, we set a temporary fallback.
+			if (trip.getPrice().compareTo(BigDecimal.valueOf(100)) > 0) {
+				basePrice = trip.getPrice();
+			} else {
+				// Fallback to a minimum price if both are ruined
+				basePrice = BigDecimal.valueOf(500); 
+			}
+			trip.setBasePrice(basePrice);
+		}
+		
 		double multi = 1.0;
 
 		// Rule 1 : occupany based pricing
