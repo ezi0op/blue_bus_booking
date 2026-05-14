@@ -13,6 +13,29 @@ const SmartSearch = ({ userId }) => {
   const [error, setError] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
 
+  const [selectedTripId, setSelectedTripId] = useState(null);
+  const [expandedStopsTripId, setExpandedStopsTripId] = useState(null);
+  const [stopsData, setStopsData] = useState({});
+
+  const toggleStops = async (trip) => {
+    if (expandedStopsTripId === trip.tripId) {
+      setExpandedStopsTripId(null);
+      return;
+    }
+    setExpandedStopsTripId(trip.tripId);
+    
+    if (!stopsData[trip.routeId]) {
+      try {
+        const res = await api.get(`/api/stops/route/${trip.routeId}`);
+        if (res.data.success) {
+          setStopsData(prev => ({ ...prev, [trip.routeId]: res.data.data }));
+        }
+      } catch (err) {
+        console.error('Error fetching stops:', err);
+      }
+    }
+  };
+
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!query.trim()) return;
@@ -20,6 +43,8 @@ const SmartSearch = ({ userId }) => {
     setLoading(true);
     setError('');
     setHasSearched(true);
+    setSelectedTripId(null);
+    setExpandedStopsTripId(null);
     
     try {
       const response = await api.post('/api/smart-search/search', {
@@ -110,18 +135,64 @@ const SmartSearch = ({ userId }) => {
           
           <div className="grid grid-cols-1 gap-6 pb-12">
             {results.map((trip, idx) => (
-              <div key={trip.tripId} className="animate-in fade-in slide-in-from-bottom-8 duration-700" style={{ animationDelay: `${idx * 150}ms` }}>
-                <TripResultCard
-                  trip={trip}
-                  from={trip.source}
-                  to={trip.destination}
-                  readOnly={true}
-                  aiData={{
-                    matchScore: trip.matchScore,
-                    recommendationReason: trip.recommendationReason
-                  }}
-                />
-              </div>
+              <React.Fragment key={trip.tripId}>
+                <div className="animate-in fade-in slide-in-from-bottom-8 duration-700" style={{ animationDelay: `${idx * 150}ms` }}>
+                  <TripResultCard
+                    trip={trip}
+                    from={trip.source}
+                    to={trip.destination}
+                    isSelected={selectedTripId === trip.tripId}
+                    onToggleSeats={() => setSelectedTripId(selectedTripId === trip.tripId ? null : trip.tripId)}
+                    isStopsExpanded={expandedStopsTripId === trip.tripId}
+                    onToggleStops={() => toggleStops(trip)}
+                    aiData={{
+                      matchScore: trip.matchScore,
+                      recommendationReason: trip.recommendationReason
+                    }}
+                  />
+                </div>
+                
+                {/* Expandable Stops */}
+                {expandedStopsTripId === trip.tripId && (
+                  <div className="mt-[-1.5rem] bg-slate-50 p-8 pt-12 rounded-b-[2.5rem] border-x border-b border-gray-100 animate-in slide-in-from-top-4 duration-500">
+                    <div className="flex items-center gap-2 mb-6">
+                      <Clock size={16} className="text-blue-600" />
+                      <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Route Schedule</h5>
+                    </div>
+                    <div className="relative pl-8 space-y-6 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-blue-100">
+                      {(stopsData[trip.routeId] || []).map((stop) => (
+                        <div key={stop.id} className="relative flex justify-between items-center bg-white p-4 rounded-2xl border border-gray-50 shadow-sm">
+                          <div className="absolute -left-[27px] w-[12px] h-[12px] rounded-full bg-white border-2 border-blue-600 z-10"></div>
+                          <div>
+                            <p className="text-sm font-black text-gray-800">{stop.name}</p>
+                          </div>
+                          <div className="flex gap-6">
+                            <div>
+                              <p className="text-[8px] text-gray-400 font-black uppercase tracking-tighter">Arrival</p>
+                              <p className="text-xs font-black text-blue-600">{stop.arrivalTime}</p>
+                            </div>
+                            <div>
+                              <p className="text-[8px] text-gray-400 font-black uppercase tracking-tighter">Departure</p>
+                              <p className="text-xs font-black text-emerald-600">{stop.departureTime}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Expandable Seat Layout */}
+                {selectedTripId === trip.tripId && (
+                  <div className="mt-[-1.5rem] animate-in slide-in-from-top-4 duration-500">
+                    <SeatLayout 
+                      tripId={trip.tripId} 
+                      price={trip.price} 
+                      onClose={() => setSelectedTripId(null)} 
+                    />
+                  </div>
+                )}
+              </React.Fragment>
             ))}
           </div>
         </div>

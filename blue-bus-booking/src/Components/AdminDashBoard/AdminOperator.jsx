@@ -33,7 +33,7 @@ const AdminOperator = () => {
   const fetchOperators = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/api/operators');
+      const response = await api.get('/api/admin/operators');
       setOperators(response.data.data || []);
     } catch (err) {
       console.error('Error fetching operators:', err);
