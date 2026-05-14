@@ -36,8 +36,9 @@ The Blue Bus Booking Project is a full-featured backend application designed to 
 ## ✨ Features
 
 ### Core Features
-- **User Management** - Registration, login, profile management, password change
+- **User Management** - Registration, login, profile management with **URL-based profile photos**
 - **Authentication & Authorization** - JWT-based authentication with token blacklisting
+- **Security** - Secure **Change Password** flow within the profile section
 - **Bus & Operator Management** - Manage bus details, operators, and their operations
 - **Route Management** - Define and manage bus routes with stops
 - **Trip Management** - Schedule and manage bus trips with pricing and availability
@@ -218,6 +219,46 @@ java -jar target/blue-bus-booking-project-0.0.1-SNAPSHOT.jar
 ```
 
 Application runs on `http://localhost:8080` by default.
+
+## ☁️ AWS Deployment (EC2)
+
+To deploy this backend on Amazon Linux 2023:
+
+1. **Upload the JAR**: Build the JAR locally and upload it to `/home/ec2-user/`.
+2. **Create Service File**: `sudo nano /etc/systemd/system/bluebus.service`
+   ```ini
+   [Unit]
+   Description=Blue Bus Booking Spring Boot App
+   After=network.target
+
+   [Service]
+   User=ec2-user
+   WorkingDirectory=/home/ec2-user
+   ExecStart=/usr/bin/java -jar /home/ec2-user/blue-bus-booking-project-0.0.1-SNAPSHOT.jar
+   SuccessExitStatus=143
+   Restart=always
+   RestartSec=10
+
+   # Environment Variables
+   Environment=DB_URL=jdbc:mysql://your-rds-endpoint:3306/bluebusbooking
+   Environment=DB_USERNAME=admin
+   Environment=DB_PASSWORD=your_password
+   Environment=RAZORPAY_KEY_ID=your_id
+   Environment=RAZORPAY_KEY_SECRET=your_secret
+   Environment=MAIL_USERNAME=your_email@gmail.com
+   Environment=MAIL_PASSWORD="your_app_password"
+   Environment=FRONTEND_URL=https://bluebusbooking.vercel.app
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+3. **Start Service**:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable bluebus
+   sudo systemctl start bluebus
+   sudo systemctl status bluebus
+   ```
 
 ## 📁 Project Structure
 
