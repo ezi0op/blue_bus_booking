@@ -82,6 +82,28 @@ public class AuthController {
 		return new ApiResponse<>(true, "Logout successful", null);
 	}
 
+	@PostMapping("/forgot-password")
+	public ApiResponse<String> forgotPassword(@RequestBody String email) {
+		// handle email being passed as raw string or JSON
+		String cleanEmail = email.replace("\"", "").trim();
+		if (cleanEmail.contains(":")) {
+			// Extract email from {"email":"..."}
+			cleanEmail = cleanEmail.substring(cleanEmail.indexOf(":") + 1, cleanEmail.lastIndexOf("}")).replace("\"", "").trim();
+		}
+		
+		authService.forgotPassword(cleanEmail);
+		return new ApiResponse<>(true, "Password reset link sent to your email", null);
+	}
+
+	@PostMapping("/reset-password")
+	public ApiResponse<String> resetPassword(@RequestBody java.util.Map<String, String> request) {
+		String token = request.get("token");
+		String newPassword = request.get("newPassword");
+		
+		authService.resetPassword(token, newPassword);
+		return new ApiResponse<>(true, "Password has been reset successfully", null);
+	}
+
 	// 🔁 MAPPER
 	private UserDTO mapToDTO(User user) {
 		return UserDTO.builder().id(user.getId()).name(user.getName()).email(user.getEmail()).phone(user.getPhone())
