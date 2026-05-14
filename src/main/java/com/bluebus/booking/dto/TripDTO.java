@@ -32,7 +32,7 @@ public class TripDTO {
 	private LocalDate journeyDate;
 
 	private LocalTime departureTime;
-	private LocalDateTime arrivalTime;
+	private LocalTime arrivalTime;
 
 	private java.math.BigDecimal price;
 

@@ -82,7 +82,7 @@ public class TripController {
 				.routeImage(trip.getRoute().getImage()).busId(trip.getBus().getId())
 				.busName(trip.getBus().getBusNumber()).busImage(trip.getBus().getImage())
 				.busType(trip.getBus().getBusType()).journeyDate(trip.getJourneyDate())
-				.departureTime(trip.getDepartureTime()).arrivalTime(trip.getArrivalTime()).price(trip.getPrice())
+				.departureTime(trip.getDepartureTime()).arrivalTime(trip.getArrivalTime().toLocalTime()).price(trip.getPrice())
 				.status(trip.getStatus()).totalSeats(trip.getTotalSeats()).availableSeats(trip.getAvailableSeats())
 				.bookedSeats(trip.getBookedSeats()).rating(trip.getRating()).cancelledAt(trip.getCancelledAt())
 				.operator(mapOperatorToDTO(trip.getBus().getOperator())).build();

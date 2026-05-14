@@ -80,6 +80,8 @@ public class User {
 
 	private LocalDateTime lastLogin;
 
+	private Long busOperatorId; // Link to the operator company if user is an OPERATOR
+
 	@Builder.Default
 	@Column(nullable = false)
 	private Boolean isActive = true;

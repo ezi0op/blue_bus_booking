@@ -6,6 +6,8 @@ import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.bluebus.booking.dto.enums.TripStatus;
 import com.bluebus.booking.entity.Trip;
@@ -37,7 +39,10 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 	List<Trip> findByRoute_DestinationIgnoreCaseAndJourneyDateAndStatus(String destination, LocalDate journeyDate,
 			TripStatus scheduled);
 
-	@org.springframework.data.jpa.repository.Query("SELECT MIN(t.journeyDate) FROM Trip t WHERE t.route.id = :routeId AND t.journeyDate >= :today AND t.status = com.bluebus.booking.dto.enums.TripStatus.SCHEDULED")
-	LocalDate findNextTripDate(@org.springframework.data.repository.query.Param("routeId") Long routeId, @org.springframework.data.repository.query.Param("today") LocalDate today);
+	@Query("SELECT MIN(t.journeyDate) FROM Trip t WHERE t.route.id = :routeId AND t.journeyDate >= :today AND t.status = com.bluebus.booking.dto.enums.TripStatus.SCHEDULED")
+	LocalDate findNextTripDate(@Param("routeId") Long routeId, @org.springframework.data.repository.query.Param("today") LocalDate today);
 
+	
+	List<Trip> findByBusOperatorId(Long operatorId);
+	
 }

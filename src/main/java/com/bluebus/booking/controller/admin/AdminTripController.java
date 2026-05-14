@@ -66,6 +66,6 @@ public class AdminTripController {
 				.busName(trip.getBus().getBusNumber())
 				.busType(trip.getBus().getBusType())
 				.journeyDate(trip.getJourneyDate()).departureTime(trip.getDepartureTime())
-				.arrivalTime(trip.getArrivalTime()).price(trip.getPrice()).status(trip.getStatus()).build();
+				.arrivalTime(trip.getArrivalTime().toLocalTime()).price(trip.getPrice()).status(trip.getStatus()).build();
 	}
 }

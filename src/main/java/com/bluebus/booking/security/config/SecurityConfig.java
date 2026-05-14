@@ -37,6 +37,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
  */
 @Configuration
 @EnableWebSecurity
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 public class SecurityConfig {
 
 	@Autowired
@@ -62,8 +63,9 @@ public class SecurityConfig {
 						.requestMatchers("/api/seat-availability/layout/**").permitAll()
 						.requestMatchers("/api/ticket/qr/**").permitAll()
 
-						// 🔒 Admin endpoints - ADMIN role required
+						// 🔒 Admin & Operator endpoints
 						.requestMatchers("/api/admin/**").hasRole("ADMIN")
+						.requestMatchers("/api/operator/**").hasAnyRole("OPERATOR", "ADMIN")
 
 						// 🔒 Authenticated user endpoints
 						.requestMatchers("/api/bookings/**").authenticated()
