@@ -1,6 +1,8 @@
 package com.bluebus.booking.serviceImpl;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -25,13 +27,19 @@ public class CustomUserDetailsService implements UserDetailsService {
 		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
-		// ✅ Dynamic Role from User Entity
-		Role userRole = user.getRole();
+		// ✅ Dynamic Roles from User Entity
+		Set<Role> userRoles = user.getRoles();
+		if (userRoles == null || userRoles.isEmpty()) {
+			userRoles = Set.of(Role.USER);
+		}
 
-		String role = "ROLE_" + userRole.name();
+		List<SimpleGrantedAuthority> authorities = userRoles.stream()
+				.map(r -> new SimpleGrantedAuthority("ROLE_" + r.name()))
+				.collect(Collectors.toList());
 
 		return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(),
-				List.of(new SimpleGrantedAuthority(role)));
+				authorities);
 	}
 
 }
+

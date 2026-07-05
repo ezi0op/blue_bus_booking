@@ -45,6 +45,7 @@ const Profile = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('userRoles');
     localStorage.removeItem('userId');
     navigate('/');
   };

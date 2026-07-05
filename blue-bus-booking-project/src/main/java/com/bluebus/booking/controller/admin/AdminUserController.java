@@ -2,17 +2,21 @@ package com.bluebus.booking.controller.admin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bluebus.booking.dto.ApiResponse;
 import com.bluebus.booking.dto.UserDTO;
+import com.bluebus.booking.dto.enums.Role;
 import com.bluebus.booking.entity.User;
 import com.bluebus.booking.service.UserService;
 
@@ -50,6 +54,14 @@ public class AdminUserController {
 		return new ApiResponse<>(true, "User status updated", mapToDTO(user));
 	}
 
+	// UPDATE USER ROLES
+	@PutMapping("/{id}/roles")
+	public ApiResponse<UserDTO> updateRoles(@PathVariable Long id, @RequestBody Set<Role> roles) {
+		User user = userService.updateUserRoles(id, roles);
+
+		return new ApiResponse<>(true, "User roles updated successfully", mapToDTO(user));
+	}
+
 	// Hard delete user
 	@DeleteMapping("/{id}")
 	public ApiResponse<Boolean> deleteUser(@PathVariable Long id) {
@@ -69,7 +81,10 @@ public class AdminUserController {
 	// mapper
 	private UserDTO mapToDTO(User user) {
 		return UserDTO.builder().id(user.getId()).name(user.getName()).email(user.getEmail()).phone(user.getPhone())
-				.image(user.getImage()).isActive(user.getIsActive()).build();
+				.image(user.getImage()).isActive(user.getIsActive()).roles(user.getRoles())
+				.busOperatorId(user.getBusOperatorId()).build();
 	}
 
 }
+
+

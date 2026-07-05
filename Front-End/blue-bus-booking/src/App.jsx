@@ -34,7 +34,7 @@ const App = () => {
   React.useEffect(() => {
     // 🔥 Clear transient data on Hard Refresh (F5) to ensure a clean session start
     // This will NOT run during internal React navigation (like clicking 'Offers' or 'Login')
-    const transientDataKeys = ['lastSearch', 'pendingBooking', 'chatHistory', 'chatSessionId', 'lastSelectedTripId'];
+    const transientDataKeys = ['lastSearch', 'pendingBooking', 'chatHistory', 'chatSessionId', 'lastSelectedTripId', 'smartSearchQuery', 'smartSearchResults', 'smartSearchSelectedTripId'];
     
     // Skip cleanup if we just logged in (redirect from Login)
     const justLoggedIn = sessionStorage.getItem('justLoggedIn');

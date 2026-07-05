@@ -100,6 +100,42 @@ public class OperatorServiceImpl implements OperatorService {
 	}
 
 	@Override
+	@Transactional
+	public BusDTO updateBus(Long operatorId, Long busId, BusDTO busDTO) {
+		Bus bus = busRepository.findById(busId)
+				.filter(b -> b.getOperator().getId().equals(operatorId))
+				.orElseThrow(() -> new RuntimeException("Bus not found or access denied"));
+
+		if (busDTO.getBusNumber() != null) {
+			bus.setBusNumber(busDTO.getBusNumber());
+		}
+		if (busDTO.getBusType() != null) {
+			bus.setBusType(busDTO.getBusType());
+		}
+		if (busDTO.getTotalSeats() != null) {
+			bus.setTotalSeats(busDTO.getTotalSeats());
+		}
+		if (busDTO.getImage() != null) {
+			bus.setImage(busDTO.getImage());
+		}
+
+		Bus updatedBus = busRepository.save(bus);
+		return mapBusToDTO(updatedBus);
+	}
+
+	@Override
+	@Transactional
+	public BusDTO toggleBusStatus(Long operatorId, Long busId) {
+		Bus bus = busRepository.findById(busId)
+				.filter(b -> b.getOperator().getId().equals(operatorId))
+				.orElseThrow(() -> new RuntimeException("Bus not found or access denied"));
+
+		bus.setIsActive(!bus.getIsActive());
+		Bus savedBus = busRepository.save(bus);
+		return mapBusToDTO(savedBus);
+	}
+
+	@Override
 	public List<TripDTO> getMyTrips(Long operatorId) {
 		return tripRepository.findByBusOperatorId(operatorId).stream()
 				.map(this::mapTripToDTO)
@@ -220,9 +256,11 @@ public class OperatorServiceImpl implements OperatorService {
 				.busType(bus.getBusType())
 				.operatorId(bus.getOperator().getId())
 				.operatorName(bus.getOperator().getName())
+				.image(bus.getImage())
 				.isActive(bus.getIsActive())
 				.build();
 	}
+
 
 	private TripDTO mapTripToDTO(Trip trip) {
 		return TripDTO.builder()

@@ -55,10 +55,20 @@ const LogIn = () => {
           
           if (userResponse.data.success) {
             const userData = userResponse.data.data;
-            const userRole = userData.role;
+            const userRoles = userData.roles || [];
+            
+            // Compute primary role for backward compatibility and initial redirect
+            let userRole = 'USER';
+            if (userRoles.includes('ADMIN')) {
+              userRole = 'ADMIN';
+            } else if (userRoles.includes('OPERATOR')) {
+              userRole = 'OPERATOR';
+            }
+            
             const userId = userData.id;
             
             localStorage.setItem('userRole', userRole);
+            localStorage.setItem('userRoles', JSON.stringify(userRoles));
             localStorage.setItem('userId', userId);
             localStorage.setItem('userName', userData.name);
             localStorage.setItem('userImage', userData.image || '');
@@ -69,12 +79,15 @@ const LogIn = () => {
             }
             
             // Auto-redirect based on role
+            const redirectPath = localStorage.getItem('loginRedirect') || '/';
+            localStorage.removeItem('loginRedirect');
+
             if (userRole === 'ADMIN') {
               navigate('/admin'); 
             } else if (userRole === 'OPERATOR') {
               navigate('/operator');
             } else {
-              navigate('/');
+              navigate(redirectPath);
             }
           }
         } catch (fetchError) {

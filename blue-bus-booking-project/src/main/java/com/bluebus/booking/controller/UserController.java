@@ -43,7 +43,8 @@ public class UserController {
 	// 🔁 MAPPER
 	private UserDTO mapToDTO(User user) {
 		return UserDTO.builder().id(user.getId()).name(user.getName()).email(user.getEmail()).phone(user.getPhone())
-				.image(user.getImage()).isActive(user.getIsActive()).role(user.getRole()).build();
+				.image(user.getImage()).isActive(user.getIsActive()).roles(user.getRoles()).build();
 	}
 
 }
+

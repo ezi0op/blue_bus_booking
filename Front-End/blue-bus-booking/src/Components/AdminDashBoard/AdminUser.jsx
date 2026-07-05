@@ -14,6 +14,7 @@ const AdminUser = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [activeEditorId, setActiveEditorId] = useState(null);
 
   const isSystemAdmin = (email) => email === 'admin@bluebus.com';
 
@@ -45,6 +46,20 @@ const AdminUser = () => {
       showMessage('User status updated successfully', 'success');
     } catch (err) {
       showMessage('Failed to update user status');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRoleChange = async (id, newRoles) => {
+    setActionLoading(id);
+    try {
+      await api.put(`/api/admin/users/${id}/roles`, newRoles);
+      setUsers(users.map(u => u.id === id ? { ...u, roles: newRoles } : u));
+      showMessage('User roles updated successfully', 'success');
+    } catch (err) {
+      console.error('Failed to update user roles:', err);
+      showMessage('Failed to update user roles');
     } finally {
       setActionLoading(null);
     }
@@ -139,6 +154,7 @@ const AdminUser = () => {
               <tr className="border-b border-slate-50 bg-slate-50/50">
                 <th className="px-8 py-5 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Identity</th>
                 <th className="px-8 py-5 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">Communication</th>
+                <th className="px-8 py-5 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Role</th>
                 <th className="px-8 py-5 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-center">Status</th>
                 <th className="px-8 py-5 text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 text-right">Actions</th>
               </tr>
@@ -146,7 +162,7 @@ const AdminUser = () => {
             <tbody className="divide-y divide-slate-50">
               {loading ? (
                 <tr>
-                  <td colSpan="4" className="px-8 py-20 text-center">
+                  <td colSpan="5" className="px-8 py-20 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                       <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Synchronizing User Data...</p>
@@ -155,12 +171,12 @@ const AdminUser = () => {
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-8 py-20 text-center text-slate-400 italic font-medium">
+                  <td colSpan="5" className="px-8 py-20 text-center text-slate-400 italic font-medium">
                     No users found matching your search criteria.
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
+                filteredUsers.map((user, idx) => (
                   <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
@@ -194,6 +210,76 @@ const AdminUser = () => {
                         </div>
                       </div>
                     </td>
+                    <td className="px-8 py-6 text-center relative">
+                      <div className="inline-block">
+                        <button
+                          onClick={() => {
+                            if (!isSystemAdmin(user.email) && actionLoading !== user.id) {
+                              setActiveEditorId(activeEditorId === user.id ? null : user.id);
+                            }
+                          }}
+                          disabled={actionLoading === user.id || isSystemAdmin(user.email)}
+                          className={`flex flex-wrap items-center justify-center gap-1 p-2 border rounded-xl hover:bg-slate-50 transition-all cursor-pointer text-left max-w-[150px] mx-auto min-h-[36px]
+                            ${actionLoading === user.id || isSystemAdmin(user.email) ? 'opacity-50 cursor-not-allowed' : ''}
+                          `}
+                        >
+                          {(!user.roles || user.roles.length === 0) ? (
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">No Roles</span>
+                          ) : (
+                            user.roles.map(r => (
+                              <span key={r} className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border ${
+                                r === 'ADMIN' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                r === 'OPERATOR' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                                'bg-slate-50 text-slate-600 border-slate-200'
+                              }`}>
+                                {r}
+                              </span>
+                            ))
+                          )}
+                        </button>
+
+                        {activeEditorId === user.id && (
+                          <>
+                            <div className="fixed inset-0 z-45" onClick={() => setActiveEditorId(null)}></div>
+                            <div className={`absolute left-1/2 -translate-x-1/2 w-48 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 z-50 animate-in zoom-in-95 duration-100 text-left space-y-2.5
+                              ${idx >= filteredUsers.length - 2 && filteredUsers.length > 2 ? 'bottom-full mb-2 origin-bottom' : 'top-full mt-2 origin-top'}
+                            `}>
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 pb-1.5 mb-2">Edit Roles</p>
+                              {['USER', 'OPERATOR', 'ADMIN'].map(roleOption => {
+                                const isChecked = user.roles && user.roles.includes(roleOption);
+                                return (
+                                  <label key={roleOption} className="flex items-center gap-2.5 cursor-pointer group">
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      disabled={roleOption === 'ADMIN' && isSystemAdmin(user.email)}
+                                      onChange={() => {
+                                        let newRoles = [...(user.roles || [])];
+                                        if (isChecked) {
+                                          newRoles = newRoles.filter(r => r !== roleOption);
+                                        } else {
+                                          newRoles.push(roleOption);
+                                        }
+                                        handleRoleChange(user.id, newRoles);
+                                      }}
+                                      className="rounded text-blue-600 focus:ring-blue-500 border-slate-300 w-4 h-4 cursor-pointer"
+                                    />
+                                    <span className={`text-[10px] font-black uppercase tracking-widest ${
+                                      roleOption === 'ADMIN' ? 'text-rose-500' :
+                                      roleOption === 'OPERATOR' ? 'text-indigo-500' :
+                                      'text-slate-500'
+                                    }`}>
+                                      {roleOption}
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </td>
+
                     <td className="px-8 py-6 text-center">
                       <button 
                         onClick={() => toggleStatus(user.id, user.isActive)}
@@ -248,3 +334,4 @@ const AdminUser = () => {
 };
 
 export default AdminUser;
+

@@ -20,12 +20,45 @@ const OperatorTrips = () => {
     price: ''
   });
 
+  const [showManageModal, setShowManageModal] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState(null);
+  const [manifest, setManifest] = useState([]);
+  const [loadingManifest, setLoadingManifest] = useState(false);
+
   const operatorId = localStorage.getItem('operatorId');
 
   useEffect(() => {
     fetchTrips();
     fetchInitialData();
   }, [operatorId]);
+
+  const handleOpenManageModal = async (trip) => {
+    setSelectedTrip(trip);
+    setShowManageModal(true);
+    setLoadingManifest(true);
+    try {
+      const response = await api.get(`/api/operator/manifest/${trip.id}?operatorId=${operatorId}`);
+      if (response.data.success) {
+        setManifest(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching manifest:", error);
+    } finally {
+      setLoadingManifest(false);
+    }
+  };
+
+  const handleUpdateTripStatus = async (tripId, status) => {
+    try {
+      const response = await api.put(`/api/operator/trip/${tripId}/status?operatorId=${operatorId}&status=${status}`);
+      if (response.data.success) {
+        fetchTrips();
+        setShowManageModal(false);
+      }
+    } catch (error) {
+      console.error("Error updating trip status:", error);
+    }
+  };
 
   const fetchTrips = async () => {
     try {
@@ -249,7 +282,12 @@ const OperatorTrips = () => {
                     <span className="text-sm font-black text-slate-800">₹{trip.price}</span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button className="text-blue-600 text-xs font-black uppercase tracking-widest hover:underline">Manage</button>
+                    <button 
+                      onClick={() => handleOpenManageModal(trip)}
+                      className="text-blue-600 text-xs font-black uppercase tracking-widest hover:underline"
+                    >
+                      Manage
+                    </button>
                   </td>
                 </tr>
               )) : (
@@ -261,6 +299,104 @@ const OperatorTrips = () => {
           </table>
         </div>
       </div>
+
+      {/* Manage Trip Modal */}
+      {showManageModal && selectedTrip && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+             <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+               <div>
+                 <h3 className="text-xl font-black text-slate-800 tracking-tight uppercase italic">Manage <span className="text-blue-600">Trip TRP-{selectedTrip.id}</span></h3>
+                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                   {selectedTrip.source} → {selectedTrip.destination} | {selectedTrip.journeyDate} {selectedTrip.departureTime}
+                 </p>
+               </div>
+               <button onClick={() => setShowManageModal(false)} className="p-2 hover:bg-white rounded-xl text-slate-400 hover:text-slate-600 shadow-sm transition-all">
+                 <X size={20} />
+               </button>
+             </div>
+
+             <div className="p-8 space-y-6">
+                {/* Status Toggle Controls */}
+                <div className="bg-slate-50 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Current Status</span>
+                    <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest ${
+                      selectedTrip.status === 'SCHEDULED' ? 'bg-blue-50 text-blue-600' : 
+                      selectedTrip.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+                    }`}>
+                      {selectedTrip.status}
+                    </span>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    {selectedTrip.status !== 'COMPLETED' && selectedTrip.status !== 'CANCELLED' && (
+                      <>
+                        <button 
+                          onClick={() => handleUpdateTripStatus(selectedTrip.id, 'COMPLETED')}
+                          className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-md shadow-emerald-600/10"
+                        >
+                          Complete Trip
+                        </button>
+                        <button 
+                          onClick={() => handleUpdateTripStatus(selectedTrip.id, 'CANCELLED')}
+                          className="px-4 py-2 bg-rose-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-md shadow-rose-600/10"
+                        >
+                          Cancel Trip
+                        </button>
+                      </>
+                    )}
+                    {(selectedTrip.status === 'CANCELLED' || selectedTrip.status === 'COMPLETED') && (
+                      <button 
+                        onClick={() => handleUpdateTripStatus(selectedTrip.id, 'SCHEDULED')}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md shadow-blue-600/10"
+                      >
+                        Reschedule (Set Active)
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Passenger Manifest Title */}
+                <div>
+                  <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-3">Passenger Manifest</h4>
+                  {loadingManifest ? (
+                    <div className="flex justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : manifest.length > 0 ? (
+                    <div className="overflow-hidden border border-slate-100 rounded-2xl max-h-60 overflow-y-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-100">
+                            <th className="px-4 py-3 font-black text-slate-400 uppercase tracking-widest">Seat</th>
+                            <th className="px-4 py-3 font-black text-slate-400 uppercase tracking-widest">Passenger</th>
+                            <th className="px-4 py-3 font-black text-slate-400 uppercase tracking-widest">Age/Gender</th>
+                            <th className="px-4 py-3 font-black text-slate-400 uppercase tracking-widest">Price</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50 font-bold text-slate-700">
+                          {manifest.map((item) => (
+                            <tr key={item.id} className="hover:bg-slate-50/50">
+                              <td className="px-4 py-3 text-blue-600">Seat {item.seatNumber}</td>
+                              <td className="px-4 py-3">{item.passengerName}</td>
+                              <td className="px-4 py-3 text-slate-400 uppercase tracking-wider">{item.passengerAge} yrs | {item.passengerGender}</td>
+                              <td className="px-4 py-3">₹{item.price}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center text-slate-400 border border-dashed border-slate-200 rounded-2xl">
+                      No tickets booked for this trip yet.
+                    </div>
+                  )}
+                </div>
+             </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -17,6 +17,10 @@ public interface OperatorService {
 
 	BusDTO addBus(Long operatorId, BusDTO busDTO);
 
+	BusDTO updateBus(Long operatorId, Long busId, BusDTO busDTO);
+
+	BusDTO toggleBusStatus(Long operatorId, Long busId);
+
 	// Trip Management
 	List<TripDTO> getMyTrips(Long operatorId);
 	

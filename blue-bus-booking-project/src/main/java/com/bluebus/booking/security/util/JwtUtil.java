@@ -23,8 +23,10 @@ public class JwtUtil {
 
 	// Generate TokenP
 	public String generateToken(String email) {
-		return Jwts.builder().subject(email).issuedAt(new Date())
-				.expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME)).signWith(getKey()).compact();
+		return Jwts.builder().subject(email)
+				.issuedAt(new Date())
+				.expiration(new Date(System.currentTimeMillis()
+						+ EXPIRATION_TIME)).signWith(getKey()).compact();
 	}
 
 	// extract email

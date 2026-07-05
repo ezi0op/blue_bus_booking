@@ -1,17 +1,20 @@
 package com.bluebus.booking.serviceImpl;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bluebus.booking.dto.enums.Role;
 import com.bluebus.booking.entity.User;
 import com.bluebus.booking.repository.UserRepository;
 import com.bluebus.booking.service.UserService;
 
 @Service
 public class UserServiceImpl implements UserService {
+
 
 	@Autowired
 	private UserRepository userRepository;
@@ -57,6 +60,17 @@ public class UserServiceImpl implements UserService {
 
 	}
 
+	@Transactional
+	@Override
+	public User updateUserRoles(Long userId, Set<Role> roles) {
+		User user = getUserById(userId);
+		user.getRoles().clear();
+		if (roles != null) {
+			user.getRoles().addAll(roles);
+		}
+		return userRepository.save(user);
+	}
+
 	@Override
 	public boolean deleteUser(Long id) {
 		User user = userRepository.findById(id).orElse(null);
@@ -76,3 +90,4 @@ public class UserServiceImpl implements UserService {
 	}
 
 }
+

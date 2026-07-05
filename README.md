@@ -1,625 +1,261 @@
-# Blue Bus Booking Project
-
-A comprehensive Spring Boot REST API for managing online bus ticket booking operations, including trip management, seat availability, booking operations, and user authentication with AI-powered features.
-
-## 📋 Table of Contents
-
-- [Project Overview](#project-overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Prerequisites](#prerequisites)
-- [Quick Start](#quick-start)
-- [Installation & Setup](#installation--setup)
-- [Configuration](#configuration)
-- [Running the Application](#running-the-application)
-- [Project Structure](#project-structure)
-- [API Endpoints](#api-endpoints)
-- [API Response Format](#api-response-format)
-- [Database Schema](#database-schema)
-- [Security](#security)
-- [Development](#development)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-
-## 🎯 Project Overview
-
-The Blue Bus Booking Project is a full-featured backend application designed to manage online bus ticket booking. It handles bus management, route management, trip scheduling, real-time seat availability, booking operations, and user management with JWT-based authentication and AI-powered recommendations.
-
-**Key Capabilities:**
-- Multi-user booking platform
-- Real-time seat availability tracking
-- Payment processing (Razorpay integration)
-- AI-powered chatbot and recommendations
-- Email notifications
-- Comprehensive reporting and analytics
-
-## ✨ Features
-
-### Core Features
-- **User Management** - Registration, login, profile management with **URL-based profile photos**
-- **Authentication & Authorization** - JWT-based authentication with token blacklisting
-- **Security** - Secure **Change Password** flow within the profile section
-- **Bus Management** - Manage bus details, routes, trips, coupons, and related operations
-- **Route Management** - Define and manage bus routes with stops
-- **Trip Management** - Schedule and manage bus trips with pricing and availability
-- **Booking System** - Create, confirm, and cancel bookings with multi-passenger support
-- **Seat Management** - Dynamic seat allocation and real-time availability tracking
-- **Payment Integration** - Razorpay payment gateway for secure transactions
-- **Email Notifications** - Automated email notifications for bookings and updates
-
-### Advanced Features
-- **AI-Powered Chatbot** - Natural language chat interface for booking assistance
-- **Smart Search** - Filter-based trip search with AI-assisted recommendations
-- **Seat Preferences** - AI learns user preferences and suggests optimal seats
-- **Recommendation Engine** - Personalized trip recommendations based on behavior
-- **Dynamic Pricing** - Intelligent pricing based on demand and availability, using a stored `basePrice` as the pricing anchor
-- **Advanced Filters** - Search trips by date, price range, departure time, bus type
-
-## 🛠️ Tech Stack
-
-| Category | Technology |
-|----------|-----------|
-| **Framework** | Spring Boot 3.3.5 |
-| **Language** | Java 21 |
-| **Database** | MySQL 5.7+ |
-| **ORM** | Spring Data JPA / Hibernate |
-| **Build Tool** | Maven 3.6+ |
-| **Security** | Spring Security + JWT (JJWT 0.12.6) |
-| **Validation** | Jakarta Bean Validation |
-| **Code Generation** | Lombok |
-| **Payment Gateway** | Razorpay Java SDK 1.4.7 |
-| **Email Service** | Spring Boot Mail |
-| **AI & LLM** | Spring AI + Ollama (Mistral) |
-
-## 📦 Prerequisites
-
-Before running the application, ensure you have:
-
-- **Java 21** or higher ([Download](https://www.oracle.com/java/technologies/downloads/))
-- **MySQL Server 5.7+** ([Download](https://dev.mysql.com/downloads/mysql/))
-- **Maven 3.6+** (or use the bundled Maven wrapper)
-
-### Verify Installation
-```bash
-java -version
-mysql --version
-mvn --version
-```
-
-## ⚡ Quick Start
-
-```bash
-# 1. Clone the repository
-git clone <repository-url>
-cd blue-bus-booking-project
-
-# 2. Create MySQL database
-mysql -u root -p
-CREATE DATABASE bluebusbooking;
-EXIT;
-
-# 3. Configure application.properties
-# Edit: src/main/resources/application.properties
-# Update database credentials and external service settings
-
-# 4. Run the application
-mvnw.cmd spring-boot:run  # Windows
-./mvnw spring-boot:run    # Linux/Mac
-
-# 5. Access API at http://localhost:8080/api
-```
-
-## 🚀 Installation & Setup
-
-### Step 1: Clone Repository
-```bash
-git clone <repository-url>
-cd blue-bus-booking-project
-```
-
-### Step 2: Create MySQL Database
-```bash
-mysql -u root -p
-CREATE DATABASE bluebusbooking;
-USE bluebusbooking;
-```
-
-### Step 3: Configure Application
-Edit `src/main/resources/application.properties`:
-
-```properties
-# Database
-spring.datasource.url=jdbc:mysql://localhost:3306/bluebusbooking
-spring.datasource.username=root
-spring.datasource.password=your_password
-spring.jpa.hibernate.ddl-auto=update
-
-# Razorpay Payment
-razorpay.key.id=your_razorpay_key
-razorpay.key.secret=your_razorpay_secret
-
-# Email (SMTP)
-spring.mail.host=smtp.gmail.com
-spring.mail.port=587
-spring.mail.username=your_email@gmail.com
-spring.mail.password=your_app_password
-
-# AI/Ollama
-spring.ai.ollama.base-url=http://localhost:11434
-spring.ai.ollama.model.name=mistral
-```
-
-### Step 4: Build & Run
-```bash
-# Windows
-mvnw.cmd spring-boot:run
-
-# Linux/Mac
-./mvnw spring-boot:run
-```
-
-Application runs on `http://localhost:8080`
-
-## ⚙️ Configuration
-
-### Key Properties
-
-**Database Configuration:**
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/bluebusbooking
-spring.datasource.username=root
-spring.datasource.password=password
-spring.jpa.hibernate.ddl-auto=update
-```
-
-**JWT Configuration:**
-- Secret Key: Configured in `JwtUtil.java`
-- Expiration: 24 hours
-- Algorithm: HS256 (HMAC with SHA-256)
-
-**Payment Gateway (Razorpay):**
-```properties
-razorpay.key.id=your_key_id
-razorpay.key.secret=your_key_secret
-```
-
-**Email Service:**
-```properties
-spring.mail.host=smtp.gmail.com
-spring.mail.port=587
-spring.mail.username=your_email
-spring.mail.password=your_app_password
-```
-
-**AI Features (Ollama):**
-```properties
-spring.ai.ollama.base-url=http://localhost:11434
-spring.ai.ollama.model.name=mistral
-```
-
-## ▶️ Running the Application
-
-### Using Maven Wrapper
-
-**Windows:**
-```bash
-mvnw.cmd spring-boot:run
-```
-
-**Linux/Mac:**
-```bash
-./mvnw spring-boot:run
-```
-
-### Build and Run JAR
-
-```bash
-mvn clean package
-java -jar target/blue-bus-booking-project-0.0.1-SNAPSHOT.jar
-```
-
-Application runs on `http://localhost:8080` by default.
-
-## ☁️ AWS Deployment (EC2)
-
-To deploy this backend on Amazon Linux 2023:
-
-1. **Upload the JAR**: Build the JAR locally and upload it to `/home/ec2-user/`.
-2. **Create Service File**: `sudo nano /etc/systemd/system/bluebus.service`
-   ```ini
-   [Unit]
-   Description=Blue Bus Booking Spring Boot App
-   After=network.target
-
-   [Service]
-   User=ec2-user
-   WorkingDirectory=/home/ec2-user
-   ExecStart=/usr/bin/java -jar /home/ec2-user/blue-bus-booking-project-0.0.1-SNAPSHOT.jar
-   SuccessExitStatus=143
-   Restart=always
-   RestartSec=10
-
-   # Environment Variables
-   Environment=DB_URL=jdbc:mysql://your-rds-endpoint:3306/bluebusbooking
-   Environment=DB_USERNAME=admin
-   Environment=DB_PASSWORD=your_password
-   Environment=RAZORPAY_KEY_ID=your_id
-   Environment=RAZORPAY_KEY_SECRET=your_secret
-   Environment=MAIL_USERNAME=your_email@gmail.com
-   Environment=MAIL_PASSWORD="your_app_password"
-   Environment=FRONTEND_URL=https://bluebusbooking.vercel.app
-
-   [Install]
-   WantedBy=multi-user.target
-   ```
-3. **Start Service**:
-   ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl enable bluebus
-   sudo systemctl start bluebus
-   sudo systemctl status bluebus
-   ```
-
-## 📁 Project Structure
-
-```
-blue-bus-booking-project/
-├── src/
-│   ├── main/
-│   │   ├── java/com/bluebus/booking/
-│   │   │   ├── BlueBusBookingProjectApplication.java
-│   │   │   ├── controller/              # REST API Controllers
-│   │   │   ├── service/                 # Service interfaces
-│   │   │   ├── serviceImpl/              # Service implementations
-│   │   │   ├── entity/                  # JPA Entity classes
-│   │   │   ├── dto/                     # Data Transfer Objects
-│   │   │   ├── repository/              # Spring Data JPA Repositories
-│   │   │   ├── security/                # Security & JWT configuration
-│   │   │   ├── exception/               # Custom exceptions
-│   │   │   ├── config/                  # Application configuration
-│   │   │   └── scheduler/               # Scheduled tasks
-│   │   └── resources/
-│   │       ├── application.properties   # Configuration file
-│   │       └── static/
-│   └── test/                            # Test classes
-├── pom.xml                              # Maven configuration
-└── README.md                            # This file
-```
-
-## 📡 API Endpoints
-
-### Base URL
-```
-http://localhost:8080/api
-```
-
-### Authentication & Authorization Endpoints
-
-The system uses JWT (JSON Web Tokens) for stateless authentication. Most endpoints require the `Authorization: Bearer <token>` header.
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/auth/register` | Create a new user account | No |
-| POST | `/api/auth/login` | Authenticate & receive JWT token | No |
-| POST | `/api/auth/logout` | Invalidate current JWT token | Yes |
-| GET | `/api/auth/verify/{token}` | Verify email address | No |
-| POST | `/api/auth/resend-verification` | Resend verification email | No |
-| PUT | `/api/auth/change-password` | Update password (requires old password) | Yes |
-
-### User Profile Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/auth/user-email/{email}` | Fetch user details by email |
-| PUT | `/api/users/{id}` | Update profile (Name, Phone, Image URL) |
-
-### Bus Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/buses` | List all buses |
-| GET | `/buses/{id}` | Get bus details |
-| POST | `/buses` | Create bus (Admin) |
-| PUT | `/buses/{id}` | Update bus (Admin) |
-
-### Route Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/routes` | List all routes |
-| GET | `/routes/{id}` | Get route details |
-| POST | `/routes` | Create route (Admin) |
-
-### Trip Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/trips` | List all trips |
-| GET | `/trips/{id}` | Get trip details |
-| GET | `/trips/search` | Search trips with filters |
-| POST | `/trips` | Create trip (Admin) |
-
-### Seat & Availability Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/seat-availability/trip/{tripId}` | Get seat availability |
-| PUT | `/seat-availability/lock-trip/{tripId}/seat/{seatId}` | Lock seat |
-| PUT | `/seat-availability/confirm-trip/{tripId}/seat/{seatId}` | Confirm seat |
-
-### Booking Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/bookings` | Create booking |
-| GET | `/bookings/{id}` | Get booking details |
-| GET | `/bookings/user/{userId}` | Get user's bookings |
-| PUT | `/bookings/{id}/confirm` | Confirm booking |
-| PUT | `/bookings/{id}/cancel` | Cancel booking |
-
-### Payment Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/payments/create-order` | Create payment order |
-| POST | `/payments/verify` | Verify payment |
-| GET | `/payments/{bookingId}` | Get payment details |
-
-### AI & Chatbot Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/ai/chat/message` | Send message to AI chatbot |
-
-### Recommendation Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/recommendations/trips/{userId}` | Get trip recommendations |
-| GET | `/recommendations/tours/{userId}` | Get tour recommendations |
-
-### Admin Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/admin/dashboard/summary` | Dashboard metrics |
-| GET | `/admin/dashboard/ai-analytics` | AI analytics |
-
-## 🌐 API Response Format
-
-### Success Response
-```json
-{
-    "success": true,
-    "message": "Operation completed successfully",
-    "data": { }
-}
-```
-
-### Error Response
-```json
-{
-    "success": false,
-    "message": "Error description",
-    "data": null
-}
-```
-
-## 🗄️ Database Schema
-
-### Core Entities
-
-**Users & Authentication**
-- **User** - User accounts and profiles
-- **BlacklistedToken** - Logout token blacklist
-
-**Bus Operations**
-- **Bus** - Bus details and specifications
-- **Route** - Bus routes
-- **Stop** - Individual stops on routes
-
-**Booking Management**
-- **Trip** - Scheduled bus trips
-- **Booking** - Customer bookings
-- **BookingItem** - Individual passenger allocations
-- **Seat** - Seat information
-- **SeatAvailability** - Real-time availability tracking
-
-**AI & Features**
-- **ChatMessage** - Chat history
-- **SeatPreference** - User preferences
-- **PaymentTransaction** - Payment records
-
-### Entity Relationships
-```
-User → Booking → BookingItem → Seat (in Trip)
-User → SeatPreference
-User → ChatMessage
-Bus → Seat
-Bus → Trip
-Trip → SeatAvailability
-Route → Stop
-Trip → Booking
-```
-
-## 🔐 Security
-
-### Authentication & Authorization
-
-- **JWT (JSON Web Token)** - Stateless security implementation using `jjwt 0.12.6`
-- **BCrypt Hashing** - Passwords stored with strength 12 for maximum protection
-- **Account Verification** - Compulsory email verification via secure tokens
-- **Token Invalidation** - Robust logout mechanism using a blacklisted token repository
-- **CORS Protection** - Whitelisted origins for secure cross-domain requests
-- **RBAC (Role Based Access Control)** - Fine-grained access for `ADMIN` and `USER` roles
-
-### Endpoint Protection
-
-**Public Endpoints:**
-- `/api/auth/**` - Authentication
-- `/api/trips/**` - Trip listings
-- `/api/buses/**` - Bus information
-- `/api/routes/**` - Route information
-- `/api/stops/**` - Stop information
-
-**Authenticated Endpoints:**
-- `/api/bookings/**` - Booking operations
-- `/api/users/**` - User management
-- `/api/payments/**` - Payment operations
-- `/api/ai/**` - AI features
-- `/api/recommendations/**` - Recommendations
-- `/api/invoice/**` - Invoice generation
-- `/api/coupons/**` - Coupon management
-
-**Admin Only:**
-- `/api/admin/**` - Administrative operations
-
-### JWT Token
-
-Send in Authorization header:
-```
-Authorization: Bearer <jwt_token>
-```
-
-**Token Details:**
-- Algorithm: HS256
-- Expiration: 24 hours
-- Contains: Email (subject), issued-at, expiration
-
-## 💻 Development
-
-### Building the Project
-
-```bash
-mvn clean install
-```
-
-### Running Tests
-
-```bash
-mvn test
-```
-
-### Code Style
-
-- Follow standard Java naming conventions
-- Use meaningful variable and method names
-- Write clear comments for complex logic
-- Keep methods small and focused
-
-### IDE Setup
-
-**IntelliJ IDEA / Eclipse:**
-1. Install Lombok plugin
-2. Enable annotation processing
-3. Set Java 21 as project SDK
-
-**Visual Studio Code:**
-1. Install Extension Pack for Java
-2. Install Lombok Annotations Support
-
-### Debug Mode
-
-Enable in `application.properties`:
-```properties
-logging.level.root=INFO
-logging.level.com.bluebus.booking=DEBUG
-spring.jpa.show-sql=true
-```
-
-## 🐛 Troubleshooting
-
-### Issue: "Connection refused: localhost:3306"
-**Solution:** Ensure MySQL server is running
-```bash
-# Windows
-net start MySQL
-
-# Linux/Mac
-brew services start mysql-community-server
-```
-
-### Issue: "Failed to bind port 8080"
-**Solution:** Port is in use. Change in `application.properties`:
-```properties
-server.port=8081
-```
-
-### Issue: "Ollama connection refused"
-**Solution:** Ensure Ollama server is running
-```bash
-ollama serve
-```
-
-### Issue: "Model not found in Ollama"
-**Solution:** Pull the model first
-```bash
-ollama pull mistral
-```
-
-## 🤝 Contributing
-
-### Guidelines
-
-1. **Create a Feature Branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-2. **Make Changes**
-   - Write clean, readable code
-   - Add comments for complex logic
-   - Follow existing code style
-
-3. **Commit Changes**
-   ```bash
-   git add .
-   git commit -m "Add brief description of changes"
-   ```
-
-4. **Push and Create Pull Request**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-### Code Review
-
-- Ensure all tests pass
-- Add tests for new features
-- Update documentation as needed
-
-## 📚 Additional Resources
-
-- [Spring Boot Documentation](https://spring.io/projects/spring-boot)
-- [Spring Security Documentation](https://spring.io/projects/spring-security)
-- [Spring AI Documentation](https://spring.io/projects/spring-ai)
-- [Ollama Documentation](https://ollama.ai/docs)
-- [Razorpay API Documentation](https://razorpay.com/docs/api/)
-- [JWT Best Practices](https://tools.ietf.org/html/rfc7519)
-
-## 📞 Support & Contact
-
-For issues or questions:
-1. Check the Troubleshooting section above
-2. Review code comments and documentation
-3. Ensure all prerequisites are installed
-4. Check application logs in `target/` directory
+# 🚌 BlueBus — Full-Stack AI-Powered Bus Booking Platform
+
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen.svg?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
+[![Java](https://img.shields.io/badge/Java-21-orange.svg?style=flat-square&logo=openjdk)](https://www.oracle.com/java/technologies/downloads/)
+[![React](https://img.shields.io/badge/React-19.2.5-blue.svg?style=flat-square&logo=react)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-8.0.10-purple.svg?style=flat-square&logo=vite)](https://vite.dev)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-v4.2.4-38B2AC.svg?style=flat-square&logo=tailwindcss)](https://tailwindcss.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon%20DB-4169E1.svg?style=flat-square&logo=postgresql)](https://neon.tech)
+[![AI Features](https://img.shields.io/badge/AI%20Features-OpenRouter%20%2F%20GPT--4o--mini-mediumpurple.svg?style=flat-square&logo=openai)](https://openrouter.ai)
+[![Payment Gateway](https://img.shields.io/badge/Payment%20Gateway-Razorpay-02042B.svg?style=flat-square&logo=razorpay)](https://razorpay.com)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+
+An enterprise-grade, high-performance online bus booking platform combining a modern React SPA (Vite + Tailwind CSS v4) with a secure, robust Spring Boot REST API. Features real-time seat locks, dynamic fare calculations, integrated Razorpay payment gateway, automated PDF invoice/ticket generation, and an intelligent AI Concierge for route planning and personalized seat recommendations.
+
+🔴 **[Explore Live Demo](https://bluebusbooking.vercel.app/)** • 🖥️ **[Frontend Documentation](file:///c:/Users/itspa/FirstBitSolutions/Blue-Bus-Booking-Project/Front-End/blue-bus-booking/README.md)** • ☕ **[Backend Documentation](file:///c:/Users/itspa/FirstBitSolutions/Blue-Bus-Booking-Project/blue-bus-booking-project/README.md)**
 
 ---
 
-## 📋 Project Metadata
+## 📁 Sub-Project Repository Mapping
 
-| Property | Value |
-|----------|-------|
-| **Name** | Blue Bus Booking Project |
-| **Version** | 1.2.0-RELEASE |
-| **Java Version** | 21 |
-| **Spring Boot Version** | 3.3.5 |
-| **Build Tool** | Maven 3.6+ |
-| **Status** | Production Ready |
-| **License** | Proprietary |
+The project consists of two distinct components, which can be deployed and maintained as separate repositories:
+
+```
+Blue-Bus-Booking-Project/
+├── 📁 docs/screenshots/               --> Root repository screenshot assets
+├── 📁 Front-End/blue-bus-booking/     --> React + Vite Client-side Application (Self-contained screenshots in Front-End/blue-bus-booking/docs/screenshots/)
+└── 📁 blue-bus-booking-project/        --> Spring Boot + PostgreSQL REST API Backend
+```
 
 ---
 
-**Questions?** Refer to the documentation sections above or check the code comments for implementation details.
+## 🧠 System Architecture
 
+The following diagram illustrates the data flow, security model, and external service integrations:
+
+```mermaid
+graph TD
+    %% Frontend Layer
+    subgraph Client ["Client Layer (React SPA)"]
+        SPA["React 19 + Vite 8 Client"]
+        TW["Tailwind CSS v4 Engine"]
+        LM["Leaflet Interactive Maps"]
+        SPA --> TW
+        SPA --> LM
+    end
+
+    %% Security & Gateway
+    subgraph API ["Gateway & Security (Spring Security)"]
+        Filter["JWT Filter & Token Blacklisting"]
+        RBAC["Role-Based Access Control (Admin / Operator / User)"]
+        Filter --> RBAC
+    end
+
+    %% Backend Service Layer
+    subgraph Services ["Backend Core (Spring Boot 3.3.5)"]
+        AuthSvc["Auth Service"]
+        BusSvc["Bus & Route Scheduler"]
+        BookSvc["Seat Lock & Booking Engine"]
+        PaySvc["Razorpay Payment Service"]
+        PdfSvc["iText Invoice Generator"]
+        AISvc["Spring AI (OpenRouter Connection)"]
+    end
+
+    %% Storage & Database Layer
+    subgraph Data ["Data Layer"]
+        DB[(Neon PostgreSQL Database)]
+    end
+
+    %% External Systems
+    subgraph External ["External Services"]
+        OR["OpenRouter API (GPT-4o-mini)"]
+        RZ["Razorpay Payment Gateway"]
+        SMTP["Gmail SMTP Mail Service"]
+    end
+
+    %% Flows
+    SPA -->|HTTPS + JWT| Filter
+    RBAC --> AuthSvc
+    RBAC --> BusSvc
+    RBAC --> BookSvc
+    RBAC --> PaySvc
+    RBAC --> PdfSvc
+    RBAC --> AISvc
+
+    AuthSvc --> DB
+    BusSvc --> DB
+    BookSvc --> DB
+    PaySvc --> DB
+    PdfSvc --> DB
+    AISvc --> DB
+
+    AISvc <-->|Chat & Recommendations| OR
+    PaySvc <-->|Verify Order| RZ
+    BookSvc -->|Confirm Booking Alert| SMTP
+```
+
+---
+
+## 📸 Interactive Visual Walkthrough
+
+> [!NOTE]
+> Save screenshot assets in the root `docs/screenshots/` folder to populate this gallery on the root project page.
+
+### 1. Customer Booking Experience
+
+<table>
+  <tr>
+    <td width="50%">
+      <h4>A. Home Landing Page</h4>
+      <img src="docs/screenshots/landing_page.png" alt="BlueBus Landing Page" width="100%"/>
+      <p>Clean, high-performance landing page displaying search forms for origin, destination, and departure dates with direct navigation options to operators and active promotional offers.</p>
+    </td>
+    <td width="50%">
+      <h4>B. Intelligent AI Search</h4>
+      <img src="docs/screenshots/ai_search.png" alt="AI Search and Matching" width="100%"/>
+      <p>Natural language search bar. Searches such as <i>"pune to goa"</i> query our AI engine to identify optimal departures, highlighting them with badges like <b>100% Match</b>.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h4>C. Route Itinerary & Seat Selector</h4>
+      <img src="docs/screenshots/seat_selection.png" alt="Route Details & Seat Layout" width="100%"/>
+      <p>Interactive bus seat deck mapping (Upper & Lower deck) with real-time seat locks and AI-suggested preferences (e.g. suggesting an <b>Aisle</b> seat based on past journeys).</p>
+    </td>
+    <td width="50%">
+      <h4>D. Journey Route Map Details</h4>
+      <img src="docs/screenshots/route_explorer.png" alt="Interactive Route Explorer Map" width="100%"/>
+      <p>An interactive map modal displaying the path from starting point to destination using leaflet maps, showing stops (e.g., Satara Bypass, Kolhapur Bus Stand) and specific stop timings.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h4>E. Unified Checkout & Coupon Code</h4>
+      <img src="docs/screenshots/checkout.png" alt="Checkout Page" width="100%"/>
+      <p>Consolidated booking drawer capturing passenger information, interactive payment options (UPI, Netbanking, Cards, Cash), and active coupon selector.</p>
+    </td>
+    <td width="50%">
+      <h4>F. Razorpay Gateway Verification</h4>
+      <img src="docs/screenshots/payment_success.png" alt="Razorpay Payment Verification" width="100%"/>
+      <p>Embedded Razorpay payment verification popup confirming the capture of booking charges securely.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h4>G. Confirmed Tickets & QR Scans</h4>
+      <img src="docs/screenshots/booking_confirmed.png" alt="Booking Confirmation Ticket" width="100%"/>
+      <p>Successful confirmation screen displaying QR codes for boarding, PDF download triggers, and comprehensive trip statistics.</p>
+    </td>
+    <td width="50%">
+      <h4>H. User Bookings Repository</h4>
+      <img src="docs/screenshots/user_bookings.png" alt="My Bookings Panel" width="100%"/>
+      <p>Personal profile section where users can view history, trace booking statuses (Confirmed/Cancelled), print invoices, or request cancellations.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="100%" colspan="2">
+      <h4>I. BlueBus AI Concierge (Chat Assistant)</h4>
+      <p align="center">
+        <img src="docs/screenshots/ai_chatbot.png" alt="AI Chatbot Concierge" width="50%"/>
+      </p>
+      <p align="center">Chatbot widget providing passenger assistance for checking schedules, booking trips, retrieving status details, or processing cancellations using natural language conversations.</p>
+    </td>
+  </tr>
+</table>
+
+### 2. Admin & Operator Management Consoles
+
+<table>
+  <tr>
+    <td width="50%">
+      <h4>A. Main Admin Dashboard</h4>
+      <img src="docs/screenshots/admin_dashboard.png" alt="Admin Dashboard Overview" width="100%"/>
+      <p>Comprehensive system health metrics showing gross revenue, active users, booking counts, fleet size, and AI chatbot session analytics.</p>
+    </td>
+    <td width="50%">
+      <h4>B. Strategic Fleet Partners</h4>
+      <img src="docs/screenshots/partners_mgmt.png" alt="Partners Management" width="100%"/>
+      <p>Operator registry control deck where admins onboard and manage fleet operator accounts (VRL Travels, KSRTC, Orange Travels, Neeta Travels).</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h4>C. Routes & Schedules Architect</h4>
+      <img src="docs/screenshots/schedules_routes.png" alt="Schedules and Routes Management" width="100%"/>
+      <p>Route sequence builders allowing administrators to map station stop orders, estimate distances, configure trip timings, and schedule buses.</p>
+    </td>
+    <td width="50%">
+      <h4>D. System Maintenance & Seat-Lock Purge</h4>
+      <img src="docs/screenshots/maintenance.png" alt="System Maintenance Portal" width="100%"/>
+      <p>System tools to release expired 10-minute hold seat locks, reset database configurations, and display general service health status.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h4>E. Operator Dashboard Summary</h4>
+      <img src="docs/screenshots/operator_dashboard.png" alt="Operator Dashboard Summary" width="100%"/>
+      <p>Operator-specific analytics panel displaying total earnings, active units, passenger occupancies, and monthly sales distributions.</p>
+    </td>
+    <td width="50%">
+      <h4>F. Operator Financial Earnings</h4>
+      <img src="docs/screenshots/operator_earnings.png" alt="Operator Financial Earnings" width="100%"/>
+      <p>Visual charts dissecting revenue booking channels (Web Portal vs. Mobile Application) and total yield progress.</p>
+    </td>
+  </tr>
+</table>
+
+---
+
+## ⚡ Quick Start (Local Setup)
+
+### 1. Prerequisites
+- **Java JDK 21** or higher
+- **Node.js** v18+ (with npm)
+- **PostgreSQL Database** (Local instance or Neon Cloud instance)
+- **OpenRouter API Key** (for chatbot AI operations)
+
+### 2. Database Creation
+Create a new database named `blue_bus_booking_db` in PostgreSQL:
+```sql
+CREATE DATABASE blue_bus_booking_db;
+```
+
+### 3. Backend Execution
+1. Navigate to the backend directory:
+   ```bash
+   cd blue-bus-booking-project
+   ```
+2. Configure environmental variables in `src/main/resources/application.properties` (or export them):
+   ```properties
+   DB_URL=jdbc:postgresql://localhost:5432/blue_bus_booking_db
+   DB_USERNAME=postgres
+   DB_PASSWORD=your_password
+   OPENROUTER_API_KEY=your_openrouter_api_key
+   RAZORPAY_KEY_ID=your_razorpay_key
+   RAZORPAY_KEY_SECRET=your_razorpay_secret
+   ```
+3. Boot up the Spring Boot application using Maven:
+   ```bash
+   mvnw.cmd spring-boot:run   # Windows
+   ./mvnw spring-boot:run     # Linux/Mac
+   ```
+
+### 4. Frontend Execution
+1. Navigate to the frontend directory:
+   ```bash
+   cd Front-End/blue-bus-booking
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Run the client-side server locally:
+   ```bash
+   npm run dev
+   ```
+4. Access the web interface at `http://localhost:5173`.
+
+---
+
+## 📄 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

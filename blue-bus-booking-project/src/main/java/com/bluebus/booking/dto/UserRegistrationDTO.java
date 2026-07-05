@@ -1,5 +1,8 @@
 package com.bluebus.booking.dto;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.bluebus.booking.dto.enums.Role;
 
 import jakarta.validation.constraints.Email;
@@ -36,7 +39,8 @@ public class UserRegistrationDTO {
 	private String image;
 
 	@Builder.Default
-	private Role role = Role.USER;
+	private Set<Role> roles = new HashSet<>(Set.of(Role.USER));
 
 	private Long busOperatorId;
 }
+

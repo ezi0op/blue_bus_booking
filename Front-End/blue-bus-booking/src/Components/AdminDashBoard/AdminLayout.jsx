@@ -15,6 +15,10 @@ const AdminLayout = () => {
 
   const adminName = localStorage.getItem('userName') || 'System Admin';
   const adminEmail = localStorage.getItem('userEmail') || 'admin@bluebus.com';
+  
+  const userRole = localStorage.getItem('userRole') || 'ADMIN';
+  const userRolesRaw = localStorage.getItem('userRoles');
+  const userRoles = userRolesRaw ? JSON.parse(userRolesRaw) : [userRole];
 
   const menuItems = [
     { path: '/admin', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
@@ -130,6 +134,17 @@ const AdminLayout = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            {/* ✅ Switch to Operator Console if they are OPERATOR */}
+            {userRoles.includes('OPERATOR') && (
+              <button
+                onClick={() => navigate('/operator')}
+                className="flex items-center gap-2 px-5 py-2.5 bg-indigo-50 border border-indigo-100 text-indigo-650 hover:bg-indigo-100 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all group"
+              >
+                <Activity size={16} className="group-hover:scale-110 transition-transform" />
+                Operator Portal
+              </button>
+            )}
+
             {/* ✅ Switch to Normal Site Button */}
             <button
               onClick={() => navigate('/')}

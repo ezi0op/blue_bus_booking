@@ -27,6 +27,8 @@ const Header = () => {
   const userEmail = localStorage.getItem('userEmail') || 'user@example.com';
   const userImage = localStorage.getItem('userImage');
   const userRole = localStorage.getItem('userRole');
+  const userRolesRaw = localStorage.getItem('userRoles');
+  const userRoles = userRolesRaw ? JSON.parse(userRolesRaw) : (userRole ? [userRole] : []);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -36,7 +38,7 @@ const Header = () => {
   return (
     <>
     {/* 💊 Admin Quick Access Pill - High Visibility for Administrators */}
-    {token && userRole === 'ADMIN' && (
+    {token && userRoles.includes('ADMIN') && (
       <div
         onClick={() => navigate('/admin')}
         className="fixed bottom-8 left-8 z-[9999] flex items-center gap-3 px-6 py-3.5 bg-blue-600 text-white rounded-full text-[12px] font-black uppercase tracking-[0.2em] shadow-[0_20px_50px_rgba(37,99,235,0.3)] hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all cursor-pointer group animate-in slide-in-from-bottom-8 duration-700"
@@ -125,6 +127,22 @@ const Header = () => {
                           >
                             <Ticket size={16} /> My Bookings
                           </button>
+                          {userRoles.includes('ADMIN') && (
+                            <button 
+                              onClick={() => { setProfileOpen(false); navigate('/admin'); }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 text-rose-600 text-[13px] font-black hover:bg-rose-50 rounded-xl transition-colors"
+                            >
+                              <ShieldCheck size={16} /> Admin Console
+                            </button>
+                          )}
+                          {userRoles.includes('OPERATOR') && (
+                            <button 
+                              onClick={() => { setProfileOpen(false); navigate('/operator'); }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 text-indigo-600 text-[13px] font-black hover:bg-indigo-50 rounded-xl transition-colors"
+                            >
+                              <Bus size={16} /> Operator Portal
+                            </button>
+                          )}
                           <div className="h-px bg-gray-100 my-2 mx-2"></div>
                           <button 
                             onClick={handleLogout}

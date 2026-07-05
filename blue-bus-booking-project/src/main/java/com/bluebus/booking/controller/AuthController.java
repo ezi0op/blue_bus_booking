@@ -1,5 +1,10 @@
 package com.bluebus.booking.controller;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import com.bluebus.booking.dto.enums.Role;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,9 +46,14 @@ public class AuthController {
 	@PostMapping("/register")
 	public ApiResponse<UserDTO> register(@RequestBody UserRegistrationDTO registrationDTO) {
 
+		Set<Role> userRoles = registrationDTO.getRoles();
+		if (userRoles == null || userRoles.isEmpty()) {
+			userRoles = new HashSet<>(Set.of(Role.USER));
+		}
+
 		User user = User.builder().name(registrationDTO.getName()).email(registrationDTO.getEmail())
 				.password(registrationDTO.getPassword()).phone(registrationDTO.getPhone())
-				.image(registrationDTO.getImage()).role(registrationDTO.getRole())
+				.image(registrationDTO.getImage()).roles(new HashSet<>(userRoles))
 				.busOperatorId(registrationDTO.getBusOperatorId())
 				.build();
 
@@ -87,8 +97,8 @@ public class AuthController {
 	// 🔁 MAPPER
 	private UserDTO mapToDTO(User user) {
 		return UserDTO.builder().id(user.getId()).name(user.getName()).email(user.getEmail()).phone(user.getPhone())
-				.image(user.getImage()).role(user.getRole()).isActive(user.getIsActive())
+				.image(user.getImage()).roles(user.getRoles()).isActive(user.getIsActive())
 				.busOperatorId(user.getBusOperatorId())
 				.build();
 	}
-}
+}

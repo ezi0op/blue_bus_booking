@@ -1,5 +1,7 @@
 package com.bluebus.booking.dto;
 
+import java.util.Set;
+
 import com.bluebus.booking.dto.enums.Role;
 
 import lombok.AllArgsConstructor;
@@ -19,8 +21,8 @@ public class UserDTO {
 	private String phone;
 	private String image;
 	private Boolean isActive;
-	private Role role;
+	private Set<Role> roles;
 	private Long busOperatorId;
 	
 	
-}
+}

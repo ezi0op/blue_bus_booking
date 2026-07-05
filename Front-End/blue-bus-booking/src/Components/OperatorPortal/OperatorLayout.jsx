@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, Bus, CalendarClock, Ticket, 
   Settings, LogOut, ChevronLeft, ChevronRight,
-  TrendingUp, Home, Menu, X, Receipt
+  TrendingUp, Home, Menu, X, Receipt, Shield
 } from 'lucide-react';
 
 const OperatorLayout = () => {
@@ -14,6 +14,8 @@ const OperatorLayout = () => {
 
   const userName = localStorage.getItem('userName') || 'Operator';
   const userRole = localStorage.getItem('userRole') || 'OPERATOR';
+  const userRolesRaw = localStorage.getItem('userRoles');
+  const userRoles = userRolesRaw ? JSON.parse(userRolesRaw) : [userRole];
 
   const menuItems = [
     { path: '/operator', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
@@ -122,9 +124,20 @@ const OperatorLayout = () => {
           </div>
           
           <div className="flex items-center gap-4">
+            {/* ✅ Switch to Admin Console if they are ADMIN */}
+            {userRoles.includes('ADMIN') && (
+              <button
+                onClick={() => navigate('/admin')}
+                className="flex items-center gap-2 px-5 py-2.5 bg-rose-50 border border-rose-100 text-rose-650 hover:bg-rose-100 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all group"
+              >
+                <Shield size={16} className="group-hover:scale-110 transition-transform" />
+                Admin Console
+              </button>
+            )}
+
             <button
               onClick={() => navigate('/')}
-              className="flex items-center gap-2 px-5 py-2.5 bg-slate-50 border border-slate-200 text-slate-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all group"
+              className="flex items-center gap-2 px-5 py-2.5 bg-slate-50 border border-slate-200 text-slate-650 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all group"
             >
               <Home size={16} className="group-hover:scale-110 transition-transform" />
               View Site

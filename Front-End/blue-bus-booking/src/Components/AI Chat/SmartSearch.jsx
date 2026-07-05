@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../../api/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 import { Search, Sparkles, MapPin, Calendar, Clock, Banknote, Star, ArrowRight, Loader2, Filter, Info, X, ArrowLeft } from 'lucide-react';
@@ -16,6 +16,23 @@ const SmartSearch = ({ userId }) => {
   const [selectedTripId, setSelectedTripId] = useState(null);
   const [expandedStopsTripId, setExpandedStopsTripId] = useState(null);
   const [stopsData, setStopsData] = useState({});
+
+  useEffect(() => {
+    const savedQuery = localStorage.getItem('smartSearchQuery');
+    const savedResults = localStorage.getItem('smartSearchResults');
+    const savedSelectedTripId = localStorage.getItem('smartSearchSelectedTripId');
+
+    if (savedQuery) {
+      setQuery(savedQuery);
+    }
+    if (savedResults) {
+      setResults(JSON.parse(savedResults));
+      setHasSearched(true);
+    }
+    if (savedSelectedTripId) {
+      setSelectedTripId(Number(savedSelectedTripId));
+    }
+  }, []);
 
   const toggleStops = async (trip) => {
     if (expandedStopsTripId === trip.tripId) {
@@ -45,6 +62,7 @@ const SmartSearch = ({ userId }) => {
     setHasSearched(true);
     setSelectedTripId(null);
     setExpandedStopsTripId(null);
+    localStorage.removeItem('smartSearchSelectedTripId');
     
     try {
       const response = await api.post('/api/smart-search/search', {
@@ -54,12 +72,15 @@ const SmartSearch = ({ userId }) => {
 
       if (response.data.success) {
         setResults(response.data.data);
+        localStorage.setItem('smartSearchQuery', query);
+        localStorage.setItem('smartSearchResults', JSON.stringify(response.data.data));
       } else {
         setError('No perfect matches found. Try refining your request!');
       }
     } catch (err) {
       console.error('Smart search error:', err);
-      setError('I couldn\'t find any buses available for that route. Please try another city or date.');
+      const backendError = err.response?.data?.message;
+      setError(backendError || 'I couldn\'t find any buses available for that route. Please try another city or date.');
     } finally {
       setLoading(false);
     }
@@ -69,7 +90,12 @@ const SmartSearch = ({ userId }) => {
     <div className="max-w-4xl mx-auto py-12 px-4">
       {/* Back Button */}
       <button 
-        onClick={() => navigate('/')}
+        onClick={() => {
+          localStorage.removeItem('smartSearchQuery');
+          localStorage.removeItem('smartSearchResults');
+          localStorage.removeItem('smartSearchSelectedTripId');
+          navigate('/');
+        }}
         className="flex items-center gap-2 text-gray-400 hover:text-blue-600 font-bold text-[10px] uppercase tracking-[0.2em] mb-8 transition-all group"
       >
         <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
@@ -142,7 +168,12 @@ const SmartSearch = ({ userId }) => {
                     from={trip.source}
                     to={trip.destination}
                     isSelected={selectedTripId === trip.tripId}
-                    onToggleSeats={() => setSelectedTripId(selectedTripId === trip.tripId ? null : trip.tripId)}
+                    onToggleSeats={() => {
+                      const nextId = selectedTripId === trip.tripId ? null : trip.tripId;
+                      setSelectedTripId(nextId);
+                      if (nextId) localStorage.setItem('smartSearchSelectedTripId', nextId);
+                      else localStorage.removeItem('smartSearchSelectedTripId');
+                    }}
                     isStopsExpanded={expandedStopsTripId === trip.tripId}
                     onToggleStops={() => toggleStops(trip)}
                     aiData={{

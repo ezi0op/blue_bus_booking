@@ -131,6 +131,9 @@ const CreateBookings = ({ tripId, price, selectedSeats, onBack, onRemoveSeat }) 
             localStorage.removeItem('pendingBooking');
             localStorage.removeItem('lastSearch');
             localStorage.removeItem('lastSelectedTripId');
+            localStorage.removeItem('smartSearchQuery');
+            localStorage.removeItem('smartSearchResults');
+            localStorage.removeItem('smartSearchSelectedTripId');
             navigate(`/payment-success/${bookingId}`, { replace: true });
           } catch (err) {
             setError('Failed to confirm offline payment.');
@@ -148,6 +151,9 @@ const CreateBookings = ({ tripId, price, selectedSeats, onBack, onRemoveSeat }) 
               localStorage.removeItem('pendingBooking');
               localStorage.removeItem('lastSearch');
               localStorage.removeItem('lastSelectedTripId');
+              localStorage.removeItem('smartSearchQuery');
+              localStorage.removeItem('smartSearchResults');
+              localStorage.removeItem('smartSearchSelectedTripId');
               navigate(`/payment-success/${bookingId}`, { replace: true });
             },
             onError: (errorMessage) => {

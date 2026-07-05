@@ -49,6 +49,23 @@ public class OperatorController {
 		return new ApiResponse<>(true, "Bus added to fleet successfully", savedBus);
 	}
 
+	@PutMapping("/bus/{busId}")
+	public ApiResponse<BusDTO> updateBus(
+			@RequestParam Long operatorId,
+			@PathVariable Long busId,
+			@RequestBody BusDTO busDTO) {
+		BusDTO updatedBus = operatorService.updateBus(operatorId, busId, busDTO);
+		return new ApiResponse<>(true, "Bus updated successfully", updatedBus);
+	}
+
+	@PutMapping("/bus/{busId}/status")
+	public ApiResponse<BusDTO> toggleBusStatus(
+			@RequestParam Long operatorId,
+			@PathVariable Long busId) {
+		BusDTO updatedBus = operatorService.toggleBusStatus(operatorId, busId);
+		return new ApiResponse<>(true, "Bus status updated successfully", updatedBus);
+	}
+
 	@GetMapping("/trips/{operatorId}")
 	public ApiResponse<List<TripDTO>> getMyTrips(@PathVariable Long operatorId) {
 		List<TripDTO> trips = operatorService.getMyTrips(operatorId);

@@ -107,6 +107,7 @@ const SeatLayout = ({ tripId, price, onClose }) => {
         tripId,
         selectedSeats
       }));
+      localStorage.setItem('loginRedirect', window.location.pathname);
       navigate('/login');
       return;
     }

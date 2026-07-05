@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+  import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 import { Star, Mail, Phone, ShieldCheck, MapPin, Bus, Globe, Activity, ArrowLeft } from 'lucide-react';

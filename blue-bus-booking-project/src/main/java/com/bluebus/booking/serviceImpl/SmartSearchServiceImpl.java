@@ -79,13 +79,24 @@ public class SmartSearchServiceImpl implements SmartSearchService {
 			String prompt = String.format(PARSE_PROMPT, today, tomorrow, naturalLanguageQuery);
 
 			String jsonResponse = chatClient.prompt().user(prompt).call().content();
-			
-			// Clean Markdown code blocks if present (GPT-4o often adds these)
-			if (jsonResponse != null) {
-				jsonResponse = jsonResponse.replaceAll("```json", "").replaceAll("```", "").trim();
+			log.info("Raw AI Response: {}", jsonResponse);
+
+			if (jsonResponse == null || jsonResponse.isBlank()) {
+				throw new RuntimeException("AI search service returned an empty response. Please try again.");
 			}
 
-			log.info("Parsed Cleaned Smart Search Response: {}", jsonResponse);
+			// Robust JSON extraction: Find the first '{' and last '}'
+			int firstBrace = jsonResponse.indexOf('{');
+			int lastBrace = jsonResponse.lastIndexOf('}');
+			
+			if (firstBrace >= 0 && lastBrace > firstBrace) {
+				jsonResponse = jsonResponse.substring(firstBrace, lastBrace + 1);
+			} else {
+				log.error("No JSON object found in AI response: {}", jsonResponse);
+				throw new RuntimeException("AI search failed to parse travel details. Please try a simpler query.");
+			}
+
+			log.info("Extracted JSON: {}", jsonResponse);
 
 			// Step 2: Use ObjectMapper for robust parsing
 			JsonNode root = objectMapper.readTree(jsonResponse);
@@ -188,8 +199,19 @@ public class SmartSearchServiceImpl implements SmartSearchService {
 					.collect(Collectors.toList());
 
 		} catch (Exception e) {
-			log.error("Error in smart search for query: {}", naturalLanguageQuery, e);
-			throw new RuntimeException("Smart search failed to find matches. Try adding more details like cities or dates.");
+			log.error("Critical error in smart search for query: '{}'", naturalLanguageQuery, e);
+			
+			// Check if it's an AI connectivity/auth issue
+			String errorMsg = e.getMessage();
+			if (errorMsg != null && (errorMsg.contains("401") || errorMsg.contains("API key") || errorMsg.contains("Unauthorized"))) {
+				throw new RuntimeException("AI Search service configuration error. Please check the API keys.");
+			}
+			
+			if (errorMsg != null && (errorMsg.contains("429") || errorMsg.contains("quota"))) {
+				throw new RuntimeException("AI Search limit reached for today. Please try again later.");
+			}
+
+			throw new RuntimeException("Smart search encountered an issue: " + (errorMsg != null ? errorMsg : "Unknown error"));
 		}
 	}
 }
