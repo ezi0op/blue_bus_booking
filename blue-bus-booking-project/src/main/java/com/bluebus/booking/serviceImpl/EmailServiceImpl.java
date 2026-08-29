@@ -30,101 +30,143 @@ public class EmailServiceImpl implements EmailService {
 	@Override
 	@Async
 	public void sendWelcomeEmail(String toEmail, String userName) {
-		String subject = "Welcome to Blue Bus Booking 🚌";
-		String content = "<h2>Hello " + userName + "!</h2>"
-				+ "<p>Welcome to <strong>Blue Bus Booking</strong>! We're thrilled to have you on board.</p>"
-				+ "<p>Your account has been created successfully. You can now:</p>"
-				+ "<ul>"
-				+ "  <li>Search for premium bus trips</li>"
-				+ "  <li>Book seats in seconds</li>"
-				+ "  <li>Manage your bookings anywhere, anytime</li>"
-				+ "</ul>"
-				+ "<div style='text-align: center; margin-top: 30px;'>"
-				+ "  <a href='" + frontendUrl + "/' style='background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;'>Start Booking Now</a>"
-				+ "</div>";
+		log.info("sendWelcomeEmail called for email: {}", toEmail);
+		try {
+			String subject = "Welcome to Blue Bus Booking 🚌";
+			String content = "<h2>Hello " + userName + "!</h2>"
+					+ "<p>Welcome to <strong>Blue Bus Booking</strong>! We're thrilled to have you on board.</p>"
+					+ "<p>Your account has been created successfully. You can now:</p>"
+					+ "<ul>"
+					+ "  <li>Search for premium bus trips</li>"
+					+ "  <li>Book seats in seconds</li>"
+					+ "  <li>Manage your bookings anywhere, anytime</li>"
+					+ "</ul>"
+					+ "<div style='text-align: center; margin-top: 30px;'>"
+					+ "  <a href='" + frontendUrl + "/' style='background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;'>Start Booking Now</a>"
+					+ "</div>";
 
-		sendHtmlEmail(toEmail, subject, content);
+			sendHtmlEmail(toEmail, subject, content);
+		} catch (Exception e) {
+			log.error("Error in sendWelcomeEmail for email: {}", toEmail, e);
+			throw e;
+		}
 	}
 
 	@Override
 	@Async
 	public void sendBookingConfirmation(String toEmail, String reference, String source, String destination, String date) {
-		String subject = "Booking Confirmation - " + reference;
-		String content = "<h2>Booking Received!</h2>"
-				+ "<p>Your booking has been initiated successfully. Here are your trip details:</p>"
-				+ "<div style='background-color: #f3f4f6; padding: 15px; border-radius: 10px; margin: 20px 0;'>"
-				+ "  <p><strong>Reference:</strong> " + reference + "</p>"
-				+ "  <p><strong>Route:</strong> " + source + " → " + destination + "</p>"
-				+ "  <p><strong>Date:</strong> " + date + "</p>"
-				+ "</div>"
-				+ "<p style='color: #ef4444; font-weight: bold;'>Please complete your payment within 10 minutes to confirm your seats.</p>";
+		log.info("sendBookingConfirmation called for email: {}, reference: {}", toEmail, reference);
+		try {
+			String subject = "Booking Confirmation - " + reference;
+			String content = "<h2>Booking Received!</h2>"
+					+ "<p>Your booking has been initiated successfully. Here are your trip details:</p>"
+					+ "<div style='background-color: #f3f4f6; padding: 15px; border-radius: 10px; margin: 20px 0;'>"
+					+ "  <p><strong>Reference:</strong> " + reference + "</p>"
+					+ "  <p><strong>Route:</strong> " + source + " → " + destination + "</p>"
+					+ "  <p><strong>Date:</strong> " + date + "</p>"
+					+ "</div>"
+					+ "<p style='color: #ef4444; font-weight: bold;'>Please complete your payment within 10 minutes to confirm your seats.</p>";
 
-		sendHtmlEmail(toEmail, subject, content);
+			sendHtmlEmail(toEmail, subject, content);
+		} catch (Exception e) {
+			log.error("Error in sendBookingConfirmation for email: {}, reference: {}", toEmail, reference, e);
+			throw e;
+		}
 	}
 
 	@Override
 	@Async
 	public void sendPaymentSuccess(String toEmail, String bookingRef, String paymentId, java.math.BigDecimal amount) {
-		String subject = "Payment Successful ✅ - Seat Confirmed";
-		String content = "<h2 style='color: #16a34a;'>Payment Successful!</h2>"
-				+ "<p>Great news! Your payment has been processed and your journey is confirmed.</p>"
-				+ "<div style='background-color: #f3f4f6; padding: 15px; border-radius: 10px; margin: 20px 0;'>"
-				+ "  <p><strong>Booking ID:</strong> #" + bookingRef + "</p>"
-				+ "  <p><strong>Payment ID:</strong> " + paymentId + "</p>"
-				+ "  <p><strong>Amount Paid:</strong> ₹" + amount + "</p>"
-				+ "  <p><strong>Status:</strong> <span style='color: #16a34a; font-weight: bold;'>CONFIRMED</span></p>"
-				+ "</div>"
-				+ "<p>You can download your ticket and invoice from the app. Safe journey!</p>";
+		log.info("sendPaymentSuccess called for email: {}, bookingRef: {}", toEmail, bookingRef);
+		try {
+			String subject = "Payment Successful ✅ - Seat Confirmed";
+			String content = "<h2 style='color: #16a34a;'>Payment Successful!</h2>"
+					+ "<p>Great news! Your payment has been processed and your journey is confirmed.</p>"
+					+ "<div style='background-color: #f3f4f6; padding: 15px; border-radius: 10px; margin: 20px 0;'>"
+					+ "  <p><strong>Booking ID:</strong> #" + bookingRef + "</p>"
+					+ "  <p><strong>Payment ID:</strong> " + paymentId + "</p>"
+					+ "  <p><strong>Amount Paid:</strong> ₹" + amount + "</p>"
+					+ "  <p><strong>Status:</strong> <span style='color: #16a34a; font-weight: bold;'>CONFIRMED</span></p>"
+					+ "</div>"
+					+ "<p>You can download your ticket and invoice from the app. Safe journey!</p>";
 
-		sendHtmlEmail(toEmail, subject, content);
+			sendHtmlEmail(toEmail, subject, content);
+		} catch (Exception e) {
+			log.error("Error in sendPaymentSuccess for email: {}, bookingRef: {}", toEmail, bookingRef, e);
+			throw e;
+		}
 	}
 
 	@Override
 	@Async
 	public void sendPaymentFailed(String toEmail, String bookingRef) {
-		String subject = "Payment Failed ❌ - Action Required";
-		String content = "<h2 style='color: #dc2626;'>Payment Failed</h2>"
-				+ "<p>We were unable to process your payment for booking <strong>#" + bookingRef + "</strong>.</p>"
-				+ "<p>As a result, your booking has been automatically cancelled and your seats have been released.</p>"
-				+ "<p>Please try booking again. If money was deducted, it will be refunded automatically within 5-7 business days.</p>";
+		log.info("sendPaymentFailed called for email: {}, bookingRef: {}", toEmail, bookingRef);
+		try {
+			String subject = "Payment Failed ❌ - Action Required";
+			String content = "<h2 style='color: #dc2626;'>Payment Failed</h2>"
+					+ "<p>We were unable to process your payment for booking <strong>#" + bookingRef + "</strong>.</p>"
+					+ "<p>As a result, your booking has been automatically cancelled and your seats have been released.</p>"
+					+ "<p>Please try booking again. If money was deducted, it will be refunded automatically within 5-7 business days.</p>";
 
-		sendHtmlEmail(toEmail, subject, content);
+			sendHtmlEmail(toEmail, subject, content);
+		} catch (Exception e) {
+			log.error("Error in sendPaymentFailed for email: {}, bookingRef: {}", toEmail, bookingRef, e);
+			throw e;
+		}
 	}
 
 	@Override
 	@Async
 	public void sendRefundConfirmation(String toEmail, String bookingRef, java.math.BigDecimal amount, String reason) {
-		String subject = "Refund Processed 💰";
-		String content = "<h2>Refund Initiated</h2>"
-				+ "<p>Your refund for booking <strong>#" + bookingRef + "</strong> has been initiated.</p>"
-				+ "<div style='background-color: #f3f4f6; padding: 15px; border-radius: 10px; margin: 20px 0;'>"
-				+ "  <p><strong>Refund Amount:</strong> ₹" + amount + "</p>"
-				+ "  <p><strong>Reason:</strong> " + reason + "</p>"
-				+ "</div>"
-				+ "<p>The amount will reflect in your original payment method within 5–7 business days.</p>";
+		log.info("sendRefundConfirmation called for email: {}, bookingRef: {}", toEmail, bookingRef);
+		try {
+			String subject = "Refund Processed 💰";
+			String content = "<h2>Refund Initiated</h2>"
+					+ "<p>Your refund for booking <strong>#" + bookingRef + "</strong> has been initiated.</p>"
+					+ "<div style='background-color: #f3f4f6; padding: 15px; border-radius: 10px; margin: 20px 0;'>"
+					+ "  <p><strong>Refund Amount:</strong> ₹" + amount + "</p>"
+					+ "  <p><strong>Reason:</strong> " + reason + "</p>"
+					+ "</div>"
+					+ "<p>The amount will reflect in your original payment method within 5–7 business days.</p>";
 
-		sendHtmlEmail(toEmail, subject, content);
+			sendHtmlEmail(toEmail, subject, content);
+		} catch (Exception e) {
+			log.error("Error in sendRefundConfirmation for email: {}, bookingRef: {}", toEmail, bookingRef, e);
+			throw e;
+		}
 	}
 
 	@Override
 	@Async
 	public void sendBookingCancellation(String contactEmail, String bookingReference, String source, String destination, String journeyDate) {
-		String subject = "Booking Cancelled 🚫";
-		String content = "<h2>Booking Cancelled</h2>"
-				+ "<p>Your booking <strong>#" + bookingReference + "</strong> has been successfully cancelled.</p>"
-				+ "<p>Route: " + source + " → " + destination + "</p>"
-				+ "<p>Date: " + journeyDate + "</p>"
-				+ "<p>We hope to see you again soon!</p>";
+		log.info("sendBookingCancellation called for email: {}, bookingReference: {}", contactEmail, bookingReference);
+		try {
+			String subject = "Booking Cancelled 🚫";
+			String content = "<h2>Booking Cancelled</h2>"
+					+ "<p>Your booking <strong>#" + bookingReference + "</strong> has been successfully cancelled.</p>"
+					+ "<p>Route: " + source + " → " + destination + "</p>"
+					+ "<p>Date: " + journeyDate + "</p>"
+					+ "<p>We hope to see you again soon!</p>";
 
-		sendHtmlEmail(contactEmail, subject, content);
+			sendHtmlEmail(contactEmail, subject, content);
+		} catch (Exception e) {
+			log.error("Error in sendBookingCancellation for email: {}, bookingReference: {}", contactEmail, bookingReference, e);
+			throw e;
+		}
 	}
 
 	@Override
 	@Async
 	public void sendChatNotificationEmail(String toEmail, String subject, String body) {
-		String content = "<h2>New Message from Support</h2>"
-				+ "<p>" + body.replace("\n", "<br>") + "</p>";
-		sendHtmlEmail(toEmail, subject, content);
+		log.info("sendChatNotificationEmail called for email: {}", toEmail);
+		try {
+			String content = "<h2>New Message from Support</h2>"
+					+ "<p>" + body.replace("\n", "<br>") + "</p>";
+			sendHtmlEmail(toEmail, subject, content);
+		} catch (Exception e) {
+			log.error("Error in sendChatNotificationEmail for email: {}", toEmail, e);
+			throw e;
+		}
 	}
 
 
@@ -180,19 +222,25 @@ public class EmailServiceImpl implements EmailService {
 	@Override
 	@Async
 	public void sendVerificationEmail(String toEmail, String token) {
-		String subject = "Verify Your Account - Blue Bus Booking 🛡️";
-		String verificationLink = frontendUrl + "/verify/" + token;
-		
-		String content = "<h2>Almost there!</h2>"
-				+ "<p>Thank you for signing up with <strong>Blue Bus Booking</strong>. Please click the button below to verify your email address and activate your account:</p>"
-				+ "<div style='text-align: center; margin: 40px 0;'>"
-				+ "  <a href='" + verificationLink + "' style='background-color: #2563eb; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);'>Verify Email Address</a>"
-				+ "</div>"
-				+ "<p>If the button doesn't work, you can copy and paste this link into your browser:</p>"
-				+ "<p style='font-size: 12px; color: #6b7280; word-break: break-all;'>" + verificationLink + "</p>"
-				+ "<p>This link will expire in 24 hours.</p>";
+		log.info("sendVerificationEmail called for email: {}", toEmail);
+		try {
+			String subject = "Verify Your Account - Blue Bus Booking 🛡️";
+			String verificationLink = frontendUrl + "/verify/" + token;
+			
+			String content = "<h2>Almost there!</h2>"
+					+ "<p>Thank you for signing up with <strong>Blue Bus Booking</strong>. Please click the button below to verify your email address and activate your account:</p>"
+					+ "<div style='text-align: center; margin: 40px 0;'>"
+					+ "  <a href='" + verificationLink + "' style='background-color: #2563eb; color: white; padding: 14px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);'>Verify Email Address</a>"
+					+ "</div>"
+					+ "<p>If the button doesn't work, you can copy and paste this link into your browser:</p>"
+					+ "<p style='font-size: 12px; color: #6b7280; word-break: break-all;'>" + verificationLink + "</p>"
+					+ "<p>This link will expire in 24 hours.</p>";
 
-		sendHtmlEmail(toEmail, subject, content);
+			sendHtmlEmail(toEmail, subject, content);
+		} catch (Exception e) {
+			log.error("Error in sendVerificationEmail for email: {}", toEmail, e);
+			throw e;
+		}
 	}
 
 	

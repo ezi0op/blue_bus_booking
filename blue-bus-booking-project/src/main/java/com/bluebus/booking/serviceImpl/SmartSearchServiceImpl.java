@@ -72,6 +72,7 @@ public class SmartSearchServiceImpl implements SmartSearchService {
 
 	@Override
 	public List<TripRecommendationDTO> search(String naturalLanguageQuery, Long userId) {
+		log.info("search called with naturalLanguageQuery: '{}', userId: {}", naturalLanguageQuery, userId);
 		try {
 			// Step 1: Ask AI to parse natural language
 			String today = LocalDate.now().toString();

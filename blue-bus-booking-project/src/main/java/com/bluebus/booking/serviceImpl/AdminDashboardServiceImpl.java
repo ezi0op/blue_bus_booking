@@ -19,7 +19,10 @@ import com.bluebus.booking.repository.TripRepository;
 import com.bluebus.booking.repository.UserRepository;
 import com.bluebus.booking.service.AdminDashboardService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class AdminDashboardServiceImpl implements AdminDashboardService {
 
 	@Autowired
@@ -46,65 +49,93 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 	@Override
 	public DashboardSummaryDTO getDashboardSummary() {
 
-		Long totalUsers = userRepository.count();
+		log.info("Fetching dashboard summary data...");
+		try {
 
-		Long totalBooking = bookingRepository.count();
+			Long totalUsers = userRepository.count();
 
-		Long totalTrips = tripRepository.count();
-		Long totalBuses = busRepository.count();
-		
-		Long totalBusOperaors=busRepository.countDistinctBusOperators();
+			Long totalBooking = bookingRepository.count();
 
-		Long cancelledBookings = bookingRepository.countByStatus(BookingStatus.CANCELLED);
+			Long totalTrips = tripRepository.count();
+			Long totalBuses = busRepository.count();
 
-		Long successfulPayments = paymentRepository.countByStatus(PaymentStatus.SUCCESS);
+			Long totalBusOperaors = busRepository.countDistinctBusOperators();
 
-		Long pendingPayments = paymentRepository.countByStatus(PaymentStatus.PENDING);
+			Long cancelledBookings = bookingRepository.countByStatus(BookingStatus.CANCELLED);
 
-		Long totalRefunds = paymentRepository.countByStatus(PaymentStatus.CANCELLED);
+			Long successfulPayments = paymentRepository.countByStatus(PaymentStatus.SUCCESS);
 
-		BigDecimal totalRevenue = paymentRepository.getTotalRevenue();
+			Long pendingPayments = paymentRepository.countByStatus(PaymentStatus.PENDING);
 
-		if (totalRevenue == null) {
-			totalRevenue = BigDecimal.ZERO;
+			Long totalRefunds = paymentRepository.countByStatus(PaymentStatus.CANCELLED);
+
+			BigDecimal totalRevenue = paymentRepository.getTotalRevenue();
+
+			if (totalRevenue == null) {
+				log.warn("Total revenue is null, setting it to zero");
+				totalRevenue = BigDecimal.ZERO;
+			}
+			String mostUsedCoupon = paymentRepository.findMostUsedCoupon();
+
+			if (mostUsedCoupon == null || mostUsedCoupon.isBlank()) {
+				log.warn("Most used coupon is null or blank, setting it to 'No coupon used'");
+
+				mostUsedCoupon = "No coupon used";
+			}
+
+			BigDecimal totalDiscountGiven = paymentRepository.getTotalDiscountGiven();
+
+			if (totalDiscountGiven == null) {
+				log.warn("Total discount given is null, setting it to zero");
+				totalDiscountGiven = BigDecimal.ZERO;
+			}
+			log.info(
+					"Dashboard summary fetched successfully. Total Users: {}, Total Bookings: {}, Total Revenue: {}, Total Trips: {}, Total Buses: {}, Total Bus Operators: {}, Cancelled Bookings: {}, Successful Payments: {}, Pending Payments: {}, Total Refunds: {}, Most Used Coupon: {}, Total Discount Given: {}",
+					totalUsers, totalBooking, totalRevenue, totalTrips, totalBuses, totalBusOperaors, cancelledBookings,
+					successfulPayments, pendingPayments, totalRefunds, mostUsedCoupon, totalDiscountGiven);
+			return DashboardSummaryDTO.builder().totalUsers(totalUsers).totalBookings(totalBooking)
+					.totalRevenue(totalRevenue).totalTrips(totalTrips).totalBuses(totalBuses)
+					.totalBusOperators(totalBusOperaors).cancelledBookings(cancelledBookings)
+					.successfulPayments(successfulPayments).pendingPayments(pendingPayments).totalRefunds(totalRefunds)
+					.mostUsedCoupon(mostUsedCoupon).totalDiscountGiven(totalDiscountGiven).build();
+		} catch (Exception e) {
+			log.error("Error while fetching admin dashboard summary", e);
+			throw e;
+
 		}
-		String mostUsedCoupon = paymentRepository.findMostUsedCoupon();
-
-		if (mostUsedCoupon == null || mostUsedCoupon.isBlank()) {
-			mostUsedCoupon = "No coupon used";
-		}
-
-		BigDecimal totalDiscountGiven = paymentRepository.getTotalDiscountGiven();
-
-		if (totalDiscountGiven == null) {
-			totalDiscountGiven = BigDecimal.ZERO;
-		}
-		return DashboardSummaryDTO.builder().totalUsers(totalUsers).totalBookings(totalBooking)
-				.totalRevenue(totalRevenue).totalTrips(totalTrips).totalBuses(totalBuses).totalBusOperators(totalBusOperaors)
-				.cancelledBookings(cancelledBookings).successfulPayments(successfulPayments)
-				.pendingPayments(pendingPayments).totalRefunds(totalRefunds).mostUsedCoupon(mostUsedCoupon)
-				.totalDiscountGiven(totalDiscountGiven).build();
 	}
 
 	@Override
 	public AIAnalyticsDTO getAIAnalytics() {
+		log.info("Fetching AI analytics data...");
+		try {
 
-		Long chatbotUsageCount = chatMessageRepository.count();
+			Long chatbotUsageCount = chatMessageRepository.count();
 
-		String topRoute = bookingRepository.findTopBookedRoute();
+			String topRoute = bookingRepository.findTopBookedRoute();
 
-		if (topRoute == null || topRoute.isBlank()) {
-			topRoute = "No route data";
+			if (topRoute == null || topRoute.isBlank()) {
+				log.warn("Top route is null or blank, setting it to 'No route data'");
+				topRoute = "No route data";
+			}
+
+			SeatType preferredSeatType = seatPreferenceRepository.findMostPreferredSeatType();
+
+			if (preferredSeatType == null) {
+				log.warn("Preferred seat type is null, setting it to NO_PREFERENCE");
+				preferredSeatType = SeatType.NO_PREFERENCE;
+			}
+
+			log.info("AI analytics fetched successfully. Chatbot Usage: {}, Top Route: {}, Preferred Seat Type: {}",
+					chatbotUsageCount, topRoute, preferredSeatType);
+
+			return AIAnalyticsDTO.builder().mostSearchedRoute(topRoute).topRecommendedRoute(topRoute)
+					.mostPreferredSeatType(preferredSeatType).chatbotUsageCount(chatbotUsageCount).build();
+		} catch (Exception e) {
+			log.error("Error while fetching AI analytics data", e);
+			throw e;
+
 		}
-
-		SeatType preferredSeatType = seatPreferenceRepository.findMostPreferredSeatType();
-
-		if (preferredSeatType == null) {
-			preferredSeatType = SeatType.NO_PREFERENCE;
-		}
-
-		return AIAnalyticsDTO.builder().mostSearchedRoute(topRoute).topRecommendedRoute(topRoute)
-				.mostPreferredSeatType(preferredSeatType).chatbotUsageCount(chatbotUsageCount).build();
 	}
 
 }

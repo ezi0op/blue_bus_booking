@@ -60,43 +60,48 @@ public class TripServiceImpl implements TripService {
 	@Override
 	@Transactional
 	public Trip createTrip(Trip trip) {
+		log.info("createTrip called with trip: {}", trip);
+		try {
+			if (trip.getRoute() == null || trip.getRoute().getId() == null) {
+				throw new RuntimeException("Route is required");
+			}
+			if (trip.getBus() == null || trip.getBus().getId() == null) {
+				throw new RuntimeException("Bus is required");
+			}
+			Route route = routeRepository.findById(trip.getRoute().getId())
+					.orElseThrow(() -> new RuntimeException("Route not found"));
 
-		if (trip.getRoute() == null || trip.getRoute().getId() == null) {
-			throw new RuntimeException("Route is required");
-		}
-		if (trip.getBus() == null || trip.getBus().getId() == null) {
-			throw new RuntimeException("Bus is required");
-		}
-		Route route = routeRepository.findById(trip.getRoute().getId())
-				.orElseThrow(() -> new RuntimeException("Route not found"));
+			Bus bus = busRepository.findById(trip.getBus().getId())
+					.orElseThrow(() -> new RuntimeException("Bus not found"));
 
-		Bus bus = busRepository.findById(trip.getBus().getId())
-				.orElseThrow(() -> new RuntimeException("Bus not found"));
+			trip.setRoute(route);
+			trip.setBus(bus);
+			
+			if (trip.getPrice() == null || trip.getPrice().compareTo(java.math.BigDecimal.ZERO) == 0) {
+				BigDecimal calculated = calculateFare(route.getDistance(), bus.getBusType());
+				trip.setPrice(calculated);
+				trip.setBasePrice(calculated);
+			} else {
+				// If price was manually set during creation, treat it as the base
+				trip.setBasePrice(trip.getPrice());
+			}
 
-		trip.setRoute(route);
-		trip.setBus(bus);
-		
-		if (trip.getPrice() == null || trip.getPrice().compareTo(java.math.BigDecimal.ZERO) == 0) {
-			BigDecimal calculated = calculateFare(route.getDistance(), bus.getBusType());
-			trip.setPrice(calculated);
-			trip.setBasePrice(calculated);
-		} else {
-			// If price was manually set during creation, treat it as the base
-			trip.setBasePrice(trip.getPrice());
+			if (trip.getStatus() == null) {
+				trip.setStatus(TripStatus.SCHEDULED);
+			}
+			if (trip.getTotalSeats() == null || trip.getTotalSeats() == 0) {
+				trip.setTotalSeats(bus.getTotalSeats());
+			}
+			trip.setBookedSeats(0);
+			trip.setAvailableSeats(trip.getTotalSeats());
+			
+			Trip savedTrip = tripRepository.save(trip);
+			initializeSeatsAndAvailability(savedTrip);
+			return savedTrip;
+		} catch (Exception e) {
+			log.error("Error in createTrip with trip: {}", trip, e);
+			throw e;
 		}
-
-		if (trip.getStatus() == null) {
-			trip.setStatus(TripStatus.SCHEDULED);
-		}
-		if (trip.getTotalSeats() == null || trip.getTotalSeats() == 0) {
-			trip.setTotalSeats(bus.getTotalSeats());
-		}
-		trip.setBookedSeats(0);
-		trip.setAvailableSeats(trip.getTotalSeats());
-		
-		Trip savedTrip = tripRepository.save(trip);
-		initializeSeatsAndAvailability(savedTrip);
-		return savedTrip;
 	}
 
 	private void initializeSeatsAndAvailability(Trip trip) {
@@ -168,176 +173,218 @@ public class TripServiceImpl implements TripService {
 
 	@Override
 	public Trip getTripById(Long id) {
-		return tripRepository.findById(id).orElseThrow(() -> new RuntimeException("Trip not found"));
+		log.info("getTripById called with id: {}", id);
+		try {
+			return tripRepository.findById(id).orElseThrow(() -> new RuntimeException("Trip not found"));
+		} catch (Exception e) {
+			log.error("Error in getTripById with id: {}", id, e);
+			throw e;
+		}
 	}
 
 	@Override
 	public List<Trip> getTripsByRoute(Long routeId) {
-		return tripRepository.findByRouteIdAndStatus(routeId, TripStatus.SCHEDULED);
+		log.info("getTripsByRoute called with routeId: {}", routeId);
+		try {
+			return tripRepository.findByRouteIdAndStatus(routeId, TripStatus.SCHEDULED);
+		} catch (Exception e) {
+			log.error("Error in getTripsByRoute with routeId: {}", routeId, e);
+			throw e;
+		}
 	}
 
 	@Transactional
 	@Override
 	public Trip updateTrip(Long id, Trip updatedTrip) {
-		Trip existing = getTripById(id);
+		log.info("updateTrip called with id: {}, updatedTrip: {}", id, updatedTrip);
+		try {
+			Trip existing = getTripById(id);
 
-		if (updatedTrip.getJourneyDate() != null) {
-			existing.setJourneyDate(updatedTrip.getJourneyDate());
+			if (updatedTrip.getJourneyDate() != null) {
+				existing.setJourneyDate(updatedTrip.getJourneyDate());
+			}
+
+			if (updatedTrip.getDepartureTime() != null) {
+				existing.setDepartureTime(updatedTrip.getDepartureTime());
+			}
+
+			if (updatedTrip.getArrivalTime() != null) {
+				existing.setArrivalTime(updatedTrip.getArrivalTime());
+			}
+
+			if (updatedTrip.getPrice() != null) {
+				existing.setPrice(updatedTrip.getPrice());
+			}
+
+			return tripRepository.save(existing);
+		} catch (Exception e) {
+			log.error("Error in updateTrip with id: {}, updatedTrip: {}", id, updatedTrip, e);
+			throw e;
 		}
-
-		if (updatedTrip.getDepartureTime() != null) {
-			existing.setDepartureTime(updatedTrip.getDepartureTime());
-		}
-
-		if (updatedTrip.getArrivalTime() != null) {
-			existing.setArrivalTime(updatedTrip.getArrivalTime());
-		}
-
-		if (updatedTrip.getPrice() != null) {
-			existing.setPrice(updatedTrip.getPrice());
-		}
-
-		return tripRepository.save(existing);
 	}
 
 	@Override
 	public Trip cancelTrip(Long id) {
-		Trip trip = getTripById(id);
+		log.info("cancelTrip called with id: {}", id);
+		try {
+			Trip trip = getTripById(id);
 
-		if (trip.getStatus() == TripStatus.CANCELLED) {
-			throw new RuntimeException("Trip already cancelled");
+			if (trip.getStatus() == TripStatus.CANCELLED) {
+				throw new RuntimeException("Trip already cancelled");
+			}
+
+			LocalDateTime departureDateTime = LocalDateTime.of(trip.getJourneyDate(), trip.getDepartureTime());
+
+			if (departureDateTime.isBefore(LocalDateTime.now())) {
+				throw new RuntimeException("Cannot cancel past trip");
+			}
+
+			trip.setStatus(TripStatus.CANCELLED);
+			trip.setCancelledAt(LocalDateTime.now());
+
+			return tripRepository.save(trip);
+		} catch (Exception e) {
+			log.error("Error in cancelTrip with id: {}", id, e);
+			throw e;
 		}
-
-		LocalDateTime departureDateTime = LocalDateTime.of(trip.getJourneyDate(), trip.getDepartureTime());
-
-		if (departureDateTime.isBefore(LocalDateTime.now())) {
-			throw new RuntimeException("Cannot cancel past trip");
-		}
-
-		trip.setStatus(TripStatus.CANCELLED);
-		trip.setCancelledAt(LocalDateTime.now());
-
-		return tripRepository.save(trip);
 	}
 
+	@Override
 	public List<Trip> searchTrips(TripSearchRequest req, int page, int size, String sortBy, String direction) {
+		log.info("searchTrips called with req: {}, page: {}, size: {}, sortBy: {}, direction: {}", req, page, size, sortBy, direction);
+		try {
+			List<Trip> trips = tripRepository
+					.findByRoute_SourceIgnoreCaseAndRoute_DestinationIgnoreCaseAndJourneyDateGreaterThanEqualAndStatus(
+							req.getSource().trim(), req.getDestination().trim(), req.getDate(), TripStatus.SCHEDULED);
 
-		List<Trip> trips = tripRepository
-				.findByRoute_SourceIgnoreCaseAndRoute_DestinationIgnoreCaseAndJourneyDateGreaterThanEqualAndStatus(
-						req.getSource().trim(), req.getDestination().trim(), req.getDate(), TripStatus.SCHEDULED);
+			// 🔥 FILTER: Only show trips that haven't departed yet
+			trips = trips.stream().filter(t -> {
+				LocalDateTime departureDateTime = LocalDateTime.of(t.getJourneyDate(), t.getDepartureTime());
+				return departureDateTime.isAfter(LocalDateTime.now());
+			}).toList();
 
-		// 🔥 FILTER: Only show trips that haven't departed yet
-		trips = trips.stream().filter(t -> {
-			LocalDateTime departureDateTime = LocalDateTime.of(t.getJourneyDate(), t.getDepartureTime());
-			return departureDateTime.isAfter(LocalDateTime.now());
-		}).toList();
+			// 🔥 FILTERS (same as before)
+			if (req.getMinPrice() != null) {
+				trips = trips.stream().filter(t -> t.getPrice().compareTo(req.getMinPrice()) >= 0).toList();
+			}
 
-		// 🔥 FILTERS (same as before)
-		if (req.getMinPrice() != null) {
-			trips = trips.stream().filter(t -> t.getPrice().compareTo(req.getMinPrice()) >= 0).toList();
+			if (req.getMaxPrice() != null) {
+				trips = trips.stream().filter(t -> t.getPrice().compareTo(req.getMaxPrice()) <= 0).toList();
+			}
+
+			if (req.getBusType() != null) {
+				trips = trips.stream().filter(t -> t.getBus().getBusType().name().equalsIgnoreCase(req.getBusType()))
+						.toList();
+			}
+
+			// 🔥 SORTING
+			Comparator<Trip> comparator;
+
+			if (sortBy.equalsIgnoreCase("price")) {
+				comparator = Comparator.comparing(Trip::getPrice);
+			} else {
+				comparator = Comparator.comparing(Trip::getDepartureTime);
+			}
+
+			if (direction.equalsIgnoreCase("desc")) {
+				comparator = comparator.reversed();
+			}
+
+			trips = trips.stream().sorted(comparator).toList();
+
+			// 🔥 PAGINATION
+			int start = page * size;
+			int end = Math.min(start + size, trips.size());
+
+			if (start > trips.size())
+				return List.of();
+
+			return trips.subList(start, end);
+		} catch (Exception e) {
+			log.error("Error in searchTrips with req: {}, page: {}, size: {}, sortBy: {}, direction: {}", req, page, size, sortBy, direction, e);
+			throw e;
 		}
-
-		if (req.getMaxPrice() != null) {
-			trips = trips.stream().filter(t -> t.getPrice().compareTo(req.getMaxPrice()) <= 0).toList();
-		}
-
-		if (req.getBusType() != null) {
-			trips = trips.stream().filter(t -> t.getBus().getBusType().name().equalsIgnoreCase(req.getBusType()))
-					.toList();
-		}
-
-		// 🔥 SORTING
-		Comparator<Trip> comparator;
-
-		if (sortBy.equalsIgnoreCase("price")) {
-			comparator = Comparator.comparing(Trip::getPrice);
-		} else {
-			comparator = Comparator.comparing(Trip::getDepartureTime);
-		}
-
-		if (direction.equalsIgnoreCase("desc")) {
-			comparator = comparator.reversed();
-		}
-
-		trips = trips.stream().sorted(comparator).toList();
-
-		// 🔥 PAGINATION
-		int start = page * size;
-		int end = Math.min(start + size, trips.size());
-
-		if (start > trips.size())
-			return List.of();
-
-		return trips.subList(start, end);
 	}
 
 	@Override
 	@Transactional
 	public void cancelTripByAdmin(Long tripId, String reason) {
-		log.info("Starting admin cancellation for trip {}", tripId);
-		Trip trip = tripRepository.findById(tripId).orElseThrow(() -> new RuntimeException("Trip not found"));
+		log.info("cancelTripByAdmin called with tripId: {}, reason: {}", tripId, reason);
+		try {
+			log.info("Starting admin cancellation for trip {}", tripId);
+			Trip trip = tripRepository.findById(tripId).orElseThrow(() -> new RuntimeException("Trip not found"));
 
-		if (trip.getStatus() == TripStatus.CANCELLED) {
-			log.warn("Trip {} is already cancelled. Skipping.", tripId);
-			return;
-		}
-
-		LocalDateTime departureDateTime = LocalDateTime.of(trip.getJourneyDate(), trip.getDepartureTime());
-		if (departureDateTime.isBefore(LocalDateTime.now())) {
-			throw new RuntimeException("Cannot cancel past trip");
-		}
-
-		// 1. Mark trip as cancelled immediately and flush to DB
-		trip.setStatus(TripStatus.CANCELLED);
-		trip.setCancelledAt(LocalDateTime.now());
-		tripRepository.saveAndFlush(trip);
-		log.info("Trip {} status marked as CANCELLED in database", tripId);
-
-		List<Booking> bookings = bookingRepository.findByTripId(tripId);
-		log.info("Found {} bookings for trip {}", bookings.size(), tripId);
-
-		for (Booking booking : bookings) {
-			if (booking.getStatus() == BookingStatus.CANCELLED) {
-				continue;
+			if (trip.getStatus() == TripStatus.CANCELLED) {
+				log.warn("Trip {} is already cancelled. Skipping.", tripId);
+				return;
 			}
 
-			boolean refundProcessed = false;
-			if (booking.getStatus() == BookingStatus.CONFIRMED) {
-				try {
-					log.info("Processing refund for booking {}", booking.getId());
-					paymentService.processRefund(booking.getId(), "Trip cancelled by admin: " + reason, true);
-					refundProcessed = true;
-				} catch (Exception e) {
-					log.error("Refund failed for booking {}: {}. Will attempt manual cancellation.", booking.getId(), e.getMessage());
+			LocalDateTime departureDateTime = LocalDateTime.of(trip.getJourneyDate(), trip.getDepartureTime());
+			if (departureDateTime.isBefore(LocalDateTime.now())) {
+				throw new RuntimeException("Cannot cancel past trip");
+			}
+
+			// 1. Mark trip as cancelled immediately and flush to DB
+			trip.setStatus(TripStatus.CANCELLED);
+			trip.setCancelledAt(LocalDateTime.now());
+			tripRepository.saveAndFlush(trip);
+			log.info("Trip {} status marked as CANCELLED in database", tripId);
+
+			List<Booking> bookings = bookingRepository.findByTripId(tripId);
+			log.info("Found {} bookings for trip {}", bookings.size(), tripId);
+
+			for (Booking booking : bookings) {
+				if (booking.getStatus() == BookingStatus.CANCELLED) {
+					continue;
+				}
+
+				boolean refundProcessed = false;
+				if (booking.getStatus() == BookingStatus.CONFIRMED) {
+					try {
+						log.info("Processing refund for booking {}", booking.getId());
+						paymentService.processRefund(booking.getId(), "Trip cancelled by admin: " + reason, true);
+						refundProcessed = true;
+					} catch (Exception e) {
+						log.error("Refund failed for booking {}: {}. Will attempt manual cancellation.", booking.getId(), e.getMessage());
+					}
+				}
+
+				if (!refundProcessed) {
+					log.info("Manually cancelling booking {}", booking.getId());
+					booking.setStatus(BookingStatus.CANCELLED);
+					booking.setCancellationTime(LocalDateTime.now());
+					bookingRepository.saveAndFlush(booking);
+
+					try {
+						emailService.sendBookingCancellation(
+								booking.getContactEmail(),
+								booking.getBookingReference(),
+								trip.getRoute().getSource(),
+								trip.getRoute().getDestination(),
+								trip.getJourneyDate().toString()
+						);
+					} catch (Exception e) {
+						log.error("Failed to send cancellation email for booking {}: {}", booking.getId(), e.getMessage());
+					}
 				}
 			}
 
-			if (!refundProcessed) {
-				log.info("Manually cancelling booking {}", booking.getId());
-				booking.setStatus(BookingStatus.CANCELLED);
-				booking.setCancellationTime(LocalDateTime.now());
-				bookingRepository.saveAndFlush(booking);
-
-				try {
-					emailService.sendBookingCancellation(
-							booking.getContactEmail(),
-							booking.getBookingReference(),
-							trip.getRoute().getSource(),
-							trip.getRoute().getDestination(),
-							trip.getJourneyDate().toString()
-					);
-				} catch (Exception e) {
-					log.error("Failed to send cancellation email for booking {}: {}", booking.getId(), e.getMessage());
-				}
-			}
+			log.info("Trip {} cancelled by admin successfully", tripId);
+		} catch (Exception e) {
+			log.error("Error in cancelTripByAdmin with tripId: {}, reason: {}", tripId, reason, e);
+			throw e;
 		}
-
-		log.info("Trip {} cancelled by admin successfully", tripId);
 	}
 
 	@Override
 	public List<Trip> getAllTrips() {
-		return tripRepository.findAll();
+		log.info("getAllTrips called");
+		try {
+			return tripRepository.findAll();
+		} catch (Exception e) {
+			log.error("Error in getAllTrips", e);
+			throw e;
+		}
 	}
 
 }

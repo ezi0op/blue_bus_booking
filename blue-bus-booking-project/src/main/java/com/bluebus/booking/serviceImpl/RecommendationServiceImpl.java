@@ -20,7 +20,10 @@ import com.bluebus.booking.repository.SeatPreferenceRepository;
 import com.bluebus.booking.repository.TripRepository;
 import com.bluebus.booking.service.RecommendationService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class RecommendationServiceImpl implements RecommendationService {
 
     @Autowired
@@ -34,81 +37,93 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     @Override
     public List<TripRecommendationDTO> getRecommendationsForUser(Long userId) {
-        List<TripRecommendationDTO> recommendations = new ArrayList<>();
-        
-        // 1. Get User's Seat Preference
-        Optional<SeatPreference> preferenceOpt = seatPreferenceRepository.findByUserId(userId);
-        
-        // 2. Get User's Past Bookings to find favorite routes
-        List<Booking> pastBookings = bookingRepository.findByUserId(userId);
-        
-        // 3. Find Upcoming Trips
-        List<Trip> upcomingTrips = tripRepository.findByStatusAndJourneyDateGreaterThanEqual(TripStatus.SCHEDULED, LocalDate.now());
-        
-        if (upcomingTrips.isEmpty()) return recommendations;
-
-        // Personalization Logic
-        for (Trip trip : upcomingTrips) {
-            double score = 0.0;
-            List<String> reasons = new ArrayList<>();
-
-            // Match Route (Past Bookings)
-            boolean isFrequentRoute = pastBookings.stream()
-                .anyMatch(b -> b.getTrip().getRoute().getId().equals(trip.getRoute().getId()));
+        log.info("getRecommendationsForUser called with userId: {}", userId);
+        try {
+            List<TripRecommendationDTO> recommendations = new ArrayList<>();
             
-            if (isFrequentRoute) {
-                score += 0.5;
-                reasons.add("Based on your frequent route");
-            }
-
-            // Match Seat Preference
-            if (preferenceOpt.isPresent()) {
-                SeatPreference pref = preferenceOpt.get();
-                // If user has a preference and this bus fits the type (simplistic check)
-                if (pref.getPreferredSeatType() != SeatType.NO_PREFERENCE) {
-                    score += 0.3;
-                    reasons.add("Matches your " + pref.getPreferredSeatType().toString().toLowerCase() + " seat preference");
-                }
-                if (pref.getPreferredDeckType() != com.bluebus.booking.dto.enums.DeckType.NO_PREFERENCE) {
-                    score += 0.2;
-                    reasons.add("Matches your " + pref.getPreferredDeckType().toString().toLowerCase() + " deck preference");
-                }
-            }
-
-            if (score > 0) {
-                String reason = reasons.isEmpty() ? "Highly rated trip" : String.join(" • ", reasons);
-                recommendations.add(mapToDTO(trip, score, reason));
-            }
+            // 1. Get User's Seat Preference
+            Optional<SeatPreference> preferenceOpt = seatPreferenceRepository.findByUserId(userId);
             
-            if (recommendations.size() >= 5) break;
-        }
+            // 2. Get User's Past Bookings to find favorite routes
+            List<Booking> pastBookings = bookingRepository.findByUserId(userId);
+            
+            // 3. Find Upcoming Trips
+            List<Trip> upcomingTrips = tripRepository.findByStatusAndJourneyDateGreaterThanEqual(TripStatus.SCHEDULED, LocalDate.now());
+            
+            if (upcomingTrips.isEmpty()) return recommendations;
 
-        // If no personalized recommendations, fallback to popular
-        if (recommendations.isEmpty()) {
-            return getPopularTrips();
-        }
+            // Personalization Logic
+            for (Trip trip : upcomingTrips) {
+                double score = 0.0;
+                List<String> reasons = new ArrayList<>();
 
-        return recommendations.stream()
-            .sorted((a, b) -> Double.compare(b.getMatchScore(), a.getMatchScore()))
-            .limit(5)
-            .collect(Collectors.toList());
+                // Match Route (Past Bookings)
+                boolean isFrequentRoute = pastBookings.stream()
+                    .anyMatch(b -> b.getTrip().getRoute().getId().equals(trip.getRoute().getId()));
+                
+                if (isFrequentRoute) {
+                    score += 0.5;
+                    reasons.add("Based on your frequent route");
+                }
+
+                // Match Seat Preference
+                if (preferenceOpt.isPresent()) {
+                    SeatPreference pref = preferenceOpt.get();
+                    // If user has a preference and this bus fits the type (simplistic check)
+                    if (pref.getPreferredSeatType() != SeatType.NO_PREFERENCE) {
+                        score += 0.3;
+                        reasons.add("Matches your " + pref.getPreferredSeatType().toString().toLowerCase() + " seat preference");
+                    }
+                    if (pref.getPreferredDeckType() != com.bluebus.booking.dto.enums.DeckType.NO_PREFERENCE) {
+                        score += 0.2;
+                        reasons.add("Matches your " + pref.getPreferredDeckType().toString().toLowerCase() + " deck preference");
+                    }
+                }
+
+                if (score > 0) {
+                    String reason = reasons.isEmpty() ? "Highly rated trip" : String.join(" • ", reasons);
+                    recommendations.add(mapToDTO(trip, score, reason));
+                }
+                
+                if (recommendations.size() >= 5) break;
+            }
+
+            // If no personalized recommendations, fallback to popular
+            if (recommendations.isEmpty()) {
+                return getPopularTrips();
+            }
+
+            return recommendations.stream()
+                .sorted((a, b) -> Double.compare(b.getMatchScore(), a.getMatchScore()))
+                .limit(5)
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error in getRecommendationsForUser with userId: {}", userId, e);
+            throw e;
+        }
     }
 
     @Override
     public List<TripRecommendationDTO> getPopularTrips() {
-        List<Trip> upcomingTrips = tripRepository.findByStatusAndJourneyDateGreaterThanEqual(TripStatus.SCHEDULED, LocalDate.now());
-        
-        // Use real popularity from repository if possible, or just mock some smart reasons
-        String topRoute = bookingRepository.findTopBookedRoute();
-        
-        return upcomingTrips.stream()
-            .limit(5)
-            .map(trip -> {
-                String route = trip.getRoute().getSource() + " → " + trip.getRoute().getDestination();
-                String reason = route.equals(topRoute) ? "Most popular route this week" : "Trending among travelers";
-                return mapToDTO(trip, 0.8, reason);
-            })
-            .collect(Collectors.toList());
+        log.info("getPopularTrips called");
+        try {
+            List<Trip> upcomingTrips = tripRepository.findByStatusAndJourneyDateGreaterThanEqual(TripStatus.SCHEDULED, LocalDate.now());
+            
+            // Use real popularity from repository if possible, or just mock some smart reasons
+            String topRoute = bookingRepository.findTopBookedRoute();
+            
+            return upcomingTrips.stream()
+                .limit(5)
+                .map(trip -> {
+                    String route = trip.getRoute().getSource() + " → " + trip.getRoute().getDestination();
+                    String reason = route.equals(topRoute) ? "Most popular route this week" : "Trending among travelers";
+                    return mapToDTO(trip, 0.8, reason);
+                })
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error in getPopularTrips", e);
+            throw e;
+        }
     }
 
     private TripRecommendationDTO mapToDTO(Trip trip, double score, String reason) {

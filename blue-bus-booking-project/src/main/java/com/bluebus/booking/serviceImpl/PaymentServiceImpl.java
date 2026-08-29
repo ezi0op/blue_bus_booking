@@ -61,212 +61,237 @@ public class PaymentServiceImpl implements PaymentService {
 
 	@Override
 	public PaymentResponseDTO createOrder(CreatePaymentRequestDTO request) {
-
-		Long bookingId = request.getBookingId();
-
-		Booking booking = bookingRepository.findById(bookingId)
-				.orElseThrow(() -> new RuntimeException("Booking not found"));
-
-		/*
-		 * Start with booking final amount
-		 */
-		BigDecimal amount = booking.getFinalAmount();
-
-		/*
-		 * Fetch discount and coupon info already saved in the Booking entity
-		 */
-		String usedCouponCode = booking.getAppliedCouponCode();
-		BigDecimal originalAmount = booking.getTotalAmount();
-		BigDecimal discountApplied = booking.getDiscountAmount() != null ? booking.getDiscountAmount()
-				: BigDecimal.ZERO;
-
-		/*
-		 * Create REAL Razorpay Order
-		 */
-		String razorpayOrderId = null;
+		log.info("createOrder called with request: {}", request);
 		try {
-			JSONObject orderRequest = new JSONObject();
-			orderRequest.put("amount", amount.multiply(BigDecimal.valueOf(100)).intValue()); // amount in paise
-			orderRequest.put("currency", "INR");
-			orderRequest.put("receipt", "rcpt_" + bookingId);
+			Long bookingId = request.getBookingId();
 
-			com.razorpay.Order order = razorpayClient.orders.create(orderRequest);
-			razorpayOrderId = order.get("id");
-			log.info("Razorpay Order created: {}", razorpayOrderId);
+			Booking booking = bookingRepository.findById(bookingId)
+					.orElseThrow(() -> new RuntimeException("Booking not found"));
+
+			/*
+			 * Start with booking final amount
+			 */
+			BigDecimal amount = booking.getFinalAmount();
+
+			/*
+			 * Fetch discount and coupon info already saved in the Booking entity
+			 */
+			String usedCouponCode = booking.getAppliedCouponCode();
+			BigDecimal originalAmount = booking.getTotalAmount();
+			BigDecimal discountApplied = booking.getDiscountAmount() != null ? booking.getDiscountAmount()
+					: BigDecimal.ZERO;
+
+			/*
+			 * Create REAL Razorpay Order
+			 */
+			String razorpayOrderId = null;
+			try {
+				JSONObject orderRequest = new JSONObject();
+				orderRequest.put("amount", amount.multiply(BigDecimal.valueOf(100)).intValue()); // amount in paise
+				orderRequest.put("currency", "INR");
+				orderRequest.put("receipt", "rcpt_" + bookingId);
+
+				com.razorpay.Order order = razorpayClient.orders.create(orderRequest);
+				razorpayOrderId = order.get("id");
+				log.info("Razorpay Order created: {}", razorpayOrderId);
+			} catch (Exception e) {
+				log.error("Failed to create Razorpay Order: {}", e.getMessage());
+				throw new RuntimeException("Payment Initialization Failed: " + e.getMessage());
+			}
+
+			Payment payment = Payment.builder().booking(booking).user(booking.getUser()).amount(amount)
+					.usedCouponCode(usedCouponCode).discountApplied(discountApplied).currency("INR")
+					.status(PaymentStatus.PENDING).razorpayOrderId(razorpayOrderId).createdAt(LocalDateTime.now()).build();
+
+			paymentRepository.save(payment);
+
+			return PaymentResponseDTO.builder().bookingId(booking.getId()).razorpayOrderId(razorpayOrderId)
+					.razorpayPaymentId(null).amount(amount).currency("INR").paymentStatus(PaymentStatus.PENDING.name())
+					.message("Order created successfully").build();
 		} catch (Exception e) {
-			log.error("Failed to create Razorpay Order: {}", e.getMessage());
-			// Fallback to demo ID if you want to keep testing, but it will fail in modal
-			// razorpayOrderId = "order_demo_" + UUID.randomUUID().toString().substring(0,
-			// 10);
-			throw new RuntimeException("Payment Initialization Failed: " + e.getMessage());
+			log.error("Error in createOrder with request: {}", request, e);
+			throw e;
 		}
-
-		Payment payment = Payment.builder().booking(booking).user(booking.getUser()).amount(amount)
-				.usedCouponCode(usedCouponCode).discountApplied(discountApplied).currency("INR")
-				.status(PaymentStatus.PENDING).razorpayOrderId(razorpayOrderId).createdAt(LocalDateTime.now()).build();
-
-		paymentRepository.save(payment);
-
-		return PaymentResponseDTO.builder().bookingId(booking.getId()).razorpayOrderId(razorpayOrderId)
-				.razorpayPaymentId(null).amount(amount).currency("INR").paymentStatus(PaymentStatus.PENDING.name())
-				.message("Order created successfully").build();
 	}
 
 	@Override
 	public void verifyPayment(VerifyPaymentRequestDTO request) {
-		String razorpayOrderId = request.getRazorpayOrderId();
-		String razorpayPaymentId = request.getRazorpayPaymentId();
-		String razorpaySignature = request.getRazorpaySignature();
+		log.info("verifyPayment called with request: {}", request);
+		try {
+			String razorpayOrderId = request.getRazorpayOrderId();
+			String razorpayPaymentId = request.getRazorpayPaymentId();
+			String razorpaySignature = request.getRazorpaySignature();
 
-		Payment payment = paymentRepository.findByRazorpayOrderId(razorpayOrderId)
-				.orElseThrow(() -> new RuntimeException("Payment not found"));
+			Payment payment = paymentRepository.findByRazorpayOrderId(razorpayOrderId)
+					.orElseThrow(() -> new RuntimeException("Payment not found"));
 
-		payment.setRazorpayPaymentId(razorpayPaymentId);
-		payment.setRazorpaySignature(razorpaySignature);
-		payment.setPaymentMethod(request.getPaymentMethod());
-		payment.setStatus(PaymentStatus.SUCCESS);
-		payment.setPaidAt(LocalDateTime.now());
+			payment.setRazorpayPaymentId(razorpayPaymentId);
+			payment.setRazorpaySignature(razorpaySignature);
+			payment.setPaymentMethod(request.getPaymentMethod());
+			payment.setStatus(PaymentStatus.SUCCESS);
+			payment.setPaidAt(LocalDateTime.now());
 
-		Booking booking = payment.getBooking();
-		booking.setStatus(BookingStatus.CONFIRMED);
-		booking.setPaymentCompleted(true);
+			Booking booking = payment.getBooking();
+			booking.setStatus(BookingStatus.CONFIRMED);
+			booking.setPaymentCompleted(true);
 
-		List<BookingItem> items = booking.getBookingItems();
+			List<BookingItem> items = booking.getBookingItems();
 
-		for (BookingItem item : items) {
-			SeatAvailability seat = seatAvailabilityRepository
-					.findByTripIdAndSeatId(booking.getTrip().getId(), item.getSeat().getId())
-					.orElseThrow(() -> new RuntimeException("Seat not found"));
+			for (BookingItem item : items) {
+				SeatAvailability seat = seatAvailabilityRepository
+						.findByTripIdAndSeatId(booking.getTrip().getId(), item.getSeat().getId())
+						.orElseThrow(() -> new RuntimeException("Seat not found"));
 
-			seat.setIsBooked(true);
-			seat.setIsLocked(false);
-			seat.setLockTime(null);
-			seat.setLockExpiryTime(null);
-			seat.setBooking(booking);
+				seat.setIsBooked(true);
+				seat.setIsLocked(false);
+				seat.setLockTime(null);
+				seat.setLockExpiryTime(null);
+				seat.setBooking(booking);
 
-			seatAvailabilityRepository.save(seat);
+				seatAvailabilityRepository.save(seat);
+			}
+
+			paymentRepository.save(payment);
+			bookingRepository.save(booking);
+			// Send success email
+			emailService.sendPaymentSuccess(booking.getContactEmail(), booking.getBookingReference(),
+					payment.getRazorpayPaymentId(), payment.getAmount());
+		} catch (Exception e) {
+			log.error("Error in verifyPayment with request: {}", request, e);
+			throw e;
 		}
-
-		paymentRepository.save(payment);
-		bookingRepository.save(booking);
-		// Send success email
-		emailService.sendPaymentSuccess(booking.getContactEmail(), booking.getBookingReference(),
-				payment.getRazorpayPaymentId(), payment.getAmount());
 
 	}
 
 	@Override
 	public void markPaymentFailed(VerifyPaymentRequestDTO request) {
-		String razorpayOrderId = request.getRazorpayOrderId();
+		log.info("markPaymentFailed called with request: {}", request);
+		try {
+			String razorpayOrderId = request.getRazorpayOrderId();
 
-		Payment payment = paymentRepository.findByRazorpayOrderId(razorpayOrderId)
-				.orElseThrow(() -> new RuntimeException("Payment not found"));
+			Payment payment = paymentRepository.findByRazorpayOrderId(razorpayOrderId)
+					.orElseThrow(() -> new RuntimeException("Payment not found"));
 
-		payment.setStatus(PaymentStatus.FAILED);
+			payment.setStatus(PaymentStatus.FAILED);
 
-		Booking booking = payment.getBooking();
-		booking.setStatus(BookingStatus.CANCELLED);
-		booking.setPaymentCompleted(false);
+			Booking booking = payment.getBooking();
+			booking.setStatus(BookingStatus.CANCELLED);
+			booking.setPaymentCompleted(false);
 
-		paymentRepository.save(payment);
-		bookingRepository.save(booking);
+			paymentRepository.save(payment);
+			bookingRepository.save(booking);
 
-		// 🔓 Release seats immediately on failure
-		freeSeats(booking);
+			// 🔓 Release seats immediately on failure
+			freeSeats(booking);
 
-		// Send failure email
-		emailService.sendPaymentFailed(booking.getContactEmail(), booking.getBookingReference());
+			// Send failure email
+			emailService.sendPaymentFailed(booking.getContactEmail(), booking.getBookingReference());
+		} catch (Exception e) {
+			log.error("Error in markPaymentFailed with request: {}", request, e);
+			throw e;
+		}
 	}
 
 	// get payment by booking id
 	@Override
 	public PaymentResponseDTO getPaymentByBookingId(Long bookingId) {
+		log.info("getPaymentByBookingId called with bookingId: {}", bookingId);
+		try {
+			Payment payment = paymentRepository
+					.findTopByBookingIdAndStatusOrderByCreatedAtDesc(bookingId, PaymentStatus.SUCCESS)
+					.orElseThrow(() -> new RuntimeException("Payment not found for boking:" + bookingId));
 
-		Payment payment = paymentRepository
-				.findTopByBookingIdAndStatusOrderByCreatedAtDesc(bookingId, PaymentStatus.SUCCESS)
-				.orElseThrow(() -> new RuntimeException("Payment not found for boking:" + bookingId));
-
-		return PaymentResponseDTO.builder().bookingId(payment.getBooking().getId())
-				.razorpayOrderId(payment.getRazorpayOrderId()).razorpayPaymentId(payment.getRazorpayPaymentId())
-				.amount(payment.getAmount()).currency(payment.getCurrency()).paymentStatus(payment.getStatus().name())
-				.paymentMethod(payment.getPaymentMethod() != null ? payment.getPaymentMethod() : PaymentMethod.UPI)
-				.message("Payment details fetched successfully").build();
+			return PaymentResponseDTO.builder().bookingId(payment.getBooking().getId())
+					.razorpayOrderId(payment.getRazorpayOrderId()).razorpayPaymentId(payment.getRazorpayPaymentId())
+					.amount(payment.getAmount()).currency(payment.getCurrency()).paymentStatus(payment.getStatus().name())
+					.paymentMethod(payment.getPaymentMethod() != null ? payment.getPaymentMethod() : PaymentMethod.UPI)
+					.message("Payment details fetched successfully").build();
+		} catch (Exception e) {
+			log.error("Error in getPaymentByBookingId with bookingId: {}", bookingId, e);
+			throw e;
+		}
 
 	}
 
 	@Override
 	@Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
 	public PaymentResponseDTO processRefund(Long bookingId, String reason, boolean isFullRefund) {
-		Payment payment = paymentRepository
-				.findTopByBookingIdAndStatusOrderByCreatedAtDesc(bookingId, PaymentStatus.SUCCESS)
-				.orElseThrow(() -> new RuntimeException("Payment not found for boking:" + bookingId));
+		log.info("processRefund called with bookingId: {}, reason: {}, isFullRefund: {}", bookingId, reason, isFullRefund);
+		try {
+			Payment payment = paymentRepository
+					.findTopByBookingIdAndStatusOrderByCreatedAtDesc(bookingId, PaymentStatus.SUCCESS)
+					.orElseThrow(() -> new RuntimeException("Payment not found for boking:" + bookingId));
 
-		if (payment.getStatus() != PaymentStatus.SUCCESS) {
-			throw new RuntimeException("Refund not applicable for payment status: " + payment.getStatus());
-		}
-
-		Booking booking = payment.getBooking();
-
-		// calculate refund: Use full amount if requested, else use policy
-		BigDecimal refundAmount = isFullRefund ? payment.getAmount()
-				: cancellationPolicyService.calculateRefundAmount(bookingId);
-
-		String razorpayRefundId = null;
-
-		if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
-			if (payment.getPaymentMethod() == PaymentMethod.CASH || 
-				payment.getRazorpayPaymentId() == null || 
-				payment.getRazorpayPaymentId().trim().isEmpty()) {
-				razorpayRefundId = "OFFLINE_REFUND_" + UUID.randomUUID().toString().substring(0, 8);
-			} else {
-				boolean isFullRefundProcessed = refundAmount.compareTo(payment.getAmount()) == 0;
-				razorpayRefundId = initiateRazorpayRefund(payment.getRazorpayPaymentId(), refundAmount,
-						isFullRefundProcessed);
+			if (payment.getStatus() != PaymentStatus.SUCCESS) {
+				throw new RuntimeException("Refund not applicable for payment status: " + payment.getStatus());
 			}
+
+			Booking booking = payment.getBooking();
+
+			// calculate refund: Use full amount if requested, else use policy
+			BigDecimal refundAmount = isFullRefund ? payment.getAmount()
+					: cancellationPolicyService.calculateRefundAmount(bookingId);
+
+			String razorpayRefundId = null;
+
+			if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
+				if (payment.getPaymentMethod() == PaymentMethod.CASH || 
+					payment.getRazorpayPaymentId() == null || 
+					payment.getRazorpayPaymentId().trim().isEmpty()) {
+					razorpayRefundId = "OFFLINE_REFUND_" + UUID.randomUUID().toString().substring(0, 8);
+				} else {
+					boolean isFullRefundProcessed = refundAmount.compareTo(payment.getAmount()) == 0;
+					razorpayRefundId = initiateRazorpayRefund(payment.getRazorpayPaymentId(), refundAmount,
+							isFullRefundProcessed);
+				}
+			}
+
+			if ("ALREADY_REFUNDED".equals(razorpayRefundId)) {
+				razorpayRefundId = payment.getRazorpayRefundId(); // Keep existing ID if any
+			}
+
+			payment.setRazorpayRefundId(razorpayRefundId);
+
+			// update payment
+			payment.setRefundedAmount(refundAmount);
+			payment.setRefundReason(reason);
+			payment.setRefundedAt(LocalDateTime.now());
+
+			if (refundAmount.compareTo(payment.getAmount()) == 0) {
+				payment.setStatus(PaymentStatus.REFUNDED);
+			} else if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
+				payment.setStatus(PaymentStatus.PARTIALLY_REFUNDED);
+			} else {
+				payment.setStatus(PaymentStatus.CANCELLED);
+			}
+
+			// update booking
+			booking.setStatus(BookingStatus.CANCELLED);
+			booking.setPaymentCompleted(false);
+			booking.setCancellationTime(LocalDateTime.now());
+
+			// free booked seats
+			freeSeats(booking);
+
+			paymentRepository.save(payment);
+			bookingRepository.save(booking);
+			// Send emails
+			emailService.sendRefundConfirmation(booking.getContactEmail(), booking.getBookingReference(),
+					payment.getRefundedAmount(), payment.getRefundReason());
+			emailService.sendBookingCancellation(booking.getContactEmail(), booking.getBookingReference(),
+					booking.getTrip().getRoute().getSource(), booking.getTrip().getRoute().getDestination(),
+					booking.getTrip().getJourneyDate().toString());
+
+			log.info("Refund processed successfully for booking {}", bookingId);
+
+			return PaymentResponseDTO.builder().bookingId(bookingId).razorpayOrderId(payment.getRazorpayOrderId())
+					.razorpayPaymentId(payment.getRazorpayPaymentId()).amount(payment.getAmount())
+					.refundedAmount(refundAmount).currency(payment.getCurrency()).paymentStatus(payment.getStatus().name())
+					.refundReason(reason).message("Refund processed successfully").build();
+		} catch (Exception e) {
+			log.error("Error in processRefund with bookingId: {}", bookingId, e);
+			throw e;
 		}
-
-		if ("ALREADY_REFUNDED".equals(razorpayRefundId)) {
-			razorpayRefundId = payment.getRazorpayRefundId(); // Keep existing ID if any
-		}
-
-		payment.setRazorpayRefundId(razorpayRefundId);
-
-		// update payment
-		payment.setRefundedAmount(refundAmount);
-		payment.setRefundReason(reason);
-		payment.setRefundedAt(LocalDateTime.now());
-
-		if (refundAmount.compareTo(payment.getAmount()) == 0) {
-			payment.setStatus(PaymentStatus.REFUNDED);
-		} else if (refundAmount.compareTo(BigDecimal.ZERO) > 0) {
-			payment.setStatus(PaymentStatus.PARTIALLY_REFUNDED);
-		} else {
-			payment.setStatus(PaymentStatus.CANCELLED);
-		}
-
-		// update booking
-		booking.setStatus(BookingStatus.CANCELLED);
-		booking.setPaymentCompleted(false);
-		booking.setCancellationTime(LocalDateTime.now());
-
-		// free booked seats
-		freeSeats(booking);
-
-		paymentRepository.save(payment);
-		bookingRepository.save(booking);
-		// Send emails
-		emailService.sendRefundConfirmation(booking.getContactEmail(), booking.getBookingReference(),
-				payment.getRefundedAmount(), payment.getRefundReason());
-		emailService.sendBookingCancellation(booking.getContactEmail(), booking.getBookingReference(),
-				booking.getTrip().getRoute().getSource(), booking.getTrip().getRoute().getDestination(),
-				booking.getTrip().getJourneyDate().toString());
-
-		log.info("Refund processed successfully for booking {}", bookingId);
-
-		return PaymentResponseDTO.builder().bookingId(bookingId).razorpayOrderId(payment.getRazorpayOrderId())
-				.razorpayPaymentId(payment.getRazorpayPaymentId()).amount(payment.getAmount())
-				.refundedAmount(refundAmount).currency(payment.getCurrency()).paymentStatus(payment.getStatus().name())
-				.refundReason(reason).message("Refund processed successfully").build();
 
 	}
 
@@ -336,47 +361,53 @@ public class PaymentServiceImpl implements PaymentService {
 
 	@Override
 	public void processOfflinePayment(CreatePaymentRequestDTO request, PaymentMethod paymentMethod) {
-		Long bookingId = request.getBookingId();
+		log.info("processOfflinePayment called with request: {}, paymentMethod: {}", request, paymentMethod);
+		try {
+			Long bookingId = request.getBookingId();
 
-		Booking booking = bookingRepository.findById(bookingId)
-				.orElseThrow(() -> new RuntimeException("Booking not found"));
+			Booking booking = bookingRepository.findById(bookingId)
+					.orElseThrow(() -> new RuntimeException("Booking not found"));
 
-		BigDecimal amount = booking.getFinalAmount();
-		String usedCouponCode = booking.getAppliedCouponCode();
-		BigDecimal discountApplied = booking.getDiscountAmount() != null ? booking.getDiscountAmount()
-				: BigDecimal.ZERO;
+			BigDecimal amount = booking.getFinalAmount();
+			String usedCouponCode = booking.getAppliedCouponCode();
+			BigDecimal discountApplied = booking.getDiscountAmount() != null ? booking.getDiscountAmount()
+					: BigDecimal.ZERO;
 
-		Payment payment = Payment.builder().booking(booking).user(booking.getUser()).amount(amount)
-				.usedCouponCode(usedCouponCode).discountApplied(discountApplied).currency("INR")
-				.status(PaymentStatus.SUCCESS).paymentMethod(paymentMethod)
-				.razorpayOrderId("OFFLINE_" + UUID.randomUUID().toString()).paidAt(LocalDateTime.now())
-				.createdAt(LocalDateTime.now()).build();
+			Payment payment = Payment.builder().booking(booking).user(booking.getUser()).amount(amount)
+					.usedCouponCode(usedCouponCode).discountApplied(discountApplied).currency("INR")
+					.status(PaymentStatus.SUCCESS).paymentMethod(paymentMethod)
+					.razorpayOrderId("OFFLINE_" + UUID.randomUUID().toString()).paidAt(LocalDateTime.now())
+					.createdAt(LocalDateTime.now()).build();
 
-		booking.setStatus(BookingStatus.CONFIRMED);
-		booking.setPaymentCompleted(true);
+			booking.setStatus(BookingStatus.CONFIRMED);
+			booking.setPaymentCompleted(true);
 
-		List<BookingItem> items = booking.getBookingItems();
+			List<BookingItem> items = booking.getBookingItems();
 
-		for (BookingItem item : items) {
-			SeatAvailability seat = seatAvailabilityRepository
-					.findByTripIdAndSeatId(booking.getTrip().getId(), item.getSeat().getId())
-					.orElseThrow(() -> new RuntimeException("Seat not found"));
+			for (BookingItem item : items) {
+				SeatAvailability seat = seatAvailabilityRepository
+						.findByTripIdAndSeatId(booking.getTrip().getId(), item.getSeat().getId())
+						.orElseThrow(() -> new RuntimeException("Seat not found"));
 
-			seat.setIsBooked(true);
-			seat.setIsLocked(false);
-			seat.setLockTime(null);
-			seat.setLockExpiryTime(null);
-			seat.setBooking(booking);
+				seat.setIsBooked(true);
+				seat.setIsLocked(false);
+				seat.setLockTime(null);
+				seat.setLockExpiryTime(null);
+				seat.setBooking(booking);
 
-			seatAvailabilityRepository.save(seat);
+				seatAvailabilityRepository.save(seat);
+			}
+
+			paymentRepository.save(payment);
+			bookingRepository.save(booking);
+
+			// Send success email
+			emailService.sendPaymentSuccess(booking.getContactEmail(), booking.getBookingReference(),
+					payment.getRazorpayOrderId(), payment.getAmount());
+		} catch (Exception e) {
+			log.error("Error in processOfflinePayment with request: {}, paymentMethod: {}", request, paymentMethod, e);
+			throw e;
 		}
-
-		paymentRepository.save(payment);
-		bookingRepository.save(booking);
-
-		// Send success email
-		emailService.sendPaymentSuccess(booking.getContactEmail(), booking.getBookingReference(),
-				payment.getRazorpayOrderId(), payment.getAmount());
 	}
 
 }

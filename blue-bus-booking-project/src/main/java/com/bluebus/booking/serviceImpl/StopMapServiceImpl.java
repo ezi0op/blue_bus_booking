@@ -11,7 +11,10 @@ import com.bluebus.booking.entity.Stop;
 import com.bluebus.booking.repository.StopRepository;
 import com.bluebus.booking.service.StopMapService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class StopMapServiceImpl implements StopMapService {
 
 	@Autowired
@@ -19,16 +22,21 @@ public class StopMapServiceImpl implements StopMapService {
 
 	@Override
 	public List<StopMapDTO> getStopsByRoute(Long routeId) {
+		log.info("getStopsByRoute called with routeId: {}", routeId);
+		try {
+			List<Stop> stops = stopRepository.findByRouteIdOrderBySequenceOrderAsc(routeId);
 
-		List<Stop> stops = stopRepository.findByRouteIdOrderBySequenceOrderAsc(routeId);
+			List<StopMapDTO> response = new ArrayList<>();
 
-		List<StopMapDTO> response = new ArrayList<>();
+			for (Stop stop : stops) {
+				response.add(mapToDTO(stop));
+			}
 
-		for (Stop stop : stops) {
-			response.add(mapToDTO(stop));
+			return response;
+		} catch (Exception e) {
+			log.error("Error in getStopsByRoute with routeId: {}", routeId, e);
+			throw e;
 		}
-
-		return response;
 	}
 
 	private StopMapDTO mapToDTO(Stop stop) {

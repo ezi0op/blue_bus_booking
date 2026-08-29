@@ -41,6 +41,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 	@Override
 	@Transactional(readOnly = true)
 	public byte[] generateInvoice(Long bookingId) {
+		log.info("generateInvoice called with bookingId: {}", bookingId);
 		try {
 			Booking booking = bookingRepository.findById(bookingId)
 					.orElseThrow(() -> new RuntimeException("Booking not found"));

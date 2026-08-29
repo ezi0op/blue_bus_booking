@@ -161,20 +161,16 @@ public class ChatbotServiceImpl implements ChatbotService {
 
 							if (!fallbackTrips.isEmpty()) {
 								List<TripRecommendationDTO> fallbackDTOs = fallbackTrips.stream()
-									.<TripRecommendationDTO>map(t -> TripRecommendationDTO.builder()
-										.tripId(t.getId())
-										.busName(t.getBus().getBusNumber())
-										.busType(t.getBus().getBusType().toString())
-										.busNumber(t.getBus().getBusNumber())
-										.source(t.getRoute().getSource())
-										.destination(t.getRoute().getDestination())
-										.departureTime(t.getDepartureTime().toString())
-										.arrivalTime(t.getArrivalTime().toString())
-										.journeyDate(t.getJourneyDate().toString())
-										.price(t.getPrice())
-										.availableSeats(t.getAvailableSeats())
-										.build())
-									.collect(Collectors.toList());
+										.<TripRecommendationDTO>map(t -> TripRecommendationDTO.builder()
+												.tripId(t.getId()).busName(t.getBus().getBusNumber())
+												.busType(t.getBus().getBusType().toString())
+												.busNumber(t.getBus().getBusNumber()).source(t.getRoute().getSource())
+												.destination(t.getRoute().getDestination())
+												.departureTime(t.getDepartureTime().toString())
+												.arrivalTime(t.getArrivalTime().toString())
+												.journeyDate(t.getJourneyDate().toString()).price(t.getPrice())
+												.availableSeats(t.getAvailableSeats()).build())
+										.collect(Collectors.toList());
 
 								finalMessage = "I found these scheduled trips for routes passing through your cities: \n\n"
 										+ formatTripsList(fallbackDTOs);

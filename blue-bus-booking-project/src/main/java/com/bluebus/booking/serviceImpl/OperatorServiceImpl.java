@@ -24,11 +24,14 @@ import com.bluebus.booking.repository.RouteRepository;
 import com.bluebus.booking.repository.TripRepository;
 import com.bluebus.booking.service.OperatorService;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Implementation of OperatorService for Bus Operator Portal functionality.
  * Handles statistics, fleet management, and passenger manifests.
  */
 @Service
+@Slf4j
 public class OperatorServiceImpl implements OperatorService {
 
 	@Autowired
@@ -48,194 +51,260 @@ public class OperatorServiceImpl implements OperatorService {
 
 	@Override
 	public OperatorDashboardDTO getDashboardStats(Long operatorId) {
-		// 1. Fetch data filtered by operator
-		List<Bus> myBuses = busRepository.findByOperatorId(operatorId);
-		List<Trip> myTrips = tripRepository.findByBusOperatorId(operatorId);
+		log.info("getDashboardStats called with operatorId: {}", operatorId);
+		try {
+			// 1. Fetch data filtered by operator
+			List<Bus> myBuses = busRepository.findByOperatorId(operatorId);
+			List<Trip> myTrips = tripRepository.findByBusOperatorId(operatorId);
 
-		// 2. Calculate Smart Stats
-		BigDecimal totalEarnings = myTrips.stream()
-				.flatMap(t -> t.getBookings().stream())
-				.map(Booking::getTotalAmount)
-				.reduce(BigDecimal.ZERO, BigDecimal::add);
+			// 2. Calculate Smart Stats
+			BigDecimal totalEarnings = myTrips.stream()
+					.flatMap(t -> t.getBookings().stream())
+					.map(Booking::getTotalAmount)
+					.reduce(BigDecimal.ZERO, BigDecimal::add);
 
-		long seatsSold = myTrips.stream()
-				.mapToLong(Trip::getBookedSeats)
-				.sum();
+			long seatsSold = myTrips.stream()
+					.mapToLong(Trip::getBookedSeats)
+					.sum();
 
-		// 3. Build the Dashboard DTO
-		return OperatorDashboardDTO.builder()
-				.operatorId(operatorId)
-				.totalEarnings(totalEarnings)
-				.totalBuses(myBuses.size())
-				.activeTripsCount(myTrips.size())
-				.totalSeatsSold(seatsSold)
-				.averageOccupancyRate(calculateOccupancy(myTrips))
-				.build();
+			// 3. Build the Dashboard DTO
+			return OperatorDashboardDTO.builder()
+					.operatorId(operatorId)
+					.totalEarnings(totalEarnings)
+					.totalBuses(myBuses.size())
+					.activeTripsCount(myTrips.size())
+					.totalSeatsSold(seatsSold)
+					.averageOccupancyRate(calculateOccupancy(myTrips))
+					.build();
+		} catch (Exception e) {
+			log.error("Error in getDashboardStats with operatorId: {}", operatorId, e);
+			throw e;
+		}
 	}
 
 	@Override
 	public List<BusDTO> getMyBuses(Long operatorId) {
-		return busRepository.findByOperatorId(operatorId).stream()
-				.map(this::mapBusToDTO)
-				.collect(Collectors.toList());
+		log.info("getMyBuses called with operatorId: {}", operatorId);
+		try {
+			return busRepository.findByOperatorId(operatorId).stream()
+					.map(this::mapBusToDTO)
+					.collect(Collectors.toList());
+		} catch (Exception e) {
+			log.error("Error in getMyBuses with operatorId: {}", operatorId, e);
+			throw e;
+		}
 	}
 
 	@Override
 	@Transactional
 	public BusDTO addBus(Long operatorId, BusDTO busDTO) {
-		com.bluebus.booking.entity.BusOperator operator = busOperatorRepository.findById(operatorId)
-				.orElseThrow(() -> new RuntimeException("Operator not found"));
+		log.info("addBus called with operatorId: {}, busDTO: {}", operatorId, busDTO);
+		try {
+			com.bluebus.booking.entity.BusOperator operator = busOperatorRepository.findById(operatorId)
+					.orElseThrow(() -> new RuntimeException("Operator not found"));
 
-		Bus bus = Bus.builder()
-				.busNumber(busDTO.getBusNumber())
-				.busType(busDTO.getBusType())
-				.totalSeats(busDTO.getTotalSeats())
-				.operator(operator)
-				.isActive(true)
-				.image(busDTO.getImage())
-				.build();
+			Bus bus = Bus.builder()
+					.busNumber(busDTO.getBusNumber())
+					.busType(busDTO.getBusType())
+					.totalSeats(busDTO.getTotalSeats())
+					.operator(operator)
+					.isActive(true)
+					.image(busDTO.getImage())
+					.build();
 
-		Bus savedBus = busRepository.save(bus);
-		return mapBusToDTO(savedBus);
+			Bus savedBus = busRepository.save(bus);
+			return mapBusToDTO(savedBus);
+		} catch (Exception e) {
+			log.error("Error in addBus with operatorId: {}, busDTO: {}", operatorId, busDTO, e);
+			throw e;
+		}
 	}
 
 	@Override
 	@Transactional
 	public BusDTO updateBus(Long operatorId, Long busId, BusDTO busDTO) {
-		Bus bus = busRepository.findById(busId)
-				.filter(b -> b.getOperator().getId().equals(operatorId))
-				.orElseThrow(() -> new RuntimeException("Bus not found or access denied"));
+		log.info("updateBus called with operatorId: {}, busId: {}, busDTO: {}", operatorId, busId, busDTO);
+		try {
+			Bus bus = busRepository.findById(busId)
+					.filter(b -> b.getOperator().getId().equals(operatorId))
+					.orElseThrow(() -> new RuntimeException("Bus not found or access denied"));
 
-		if (busDTO.getBusNumber() != null) {
-			bus.setBusNumber(busDTO.getBusNumber());
-		}
-		if (busDTO.getBusType() != null) {
-			bus.setBusType(busDTO.getBusType());
-		}
-		if (busDTO.getTotalSeats() != null) {
-			bus.setTotalSeats(busDTO.getTotalSeats());
-		}
-		if (busDTO.getImage() != null) {
-			bus.setImage(busDTO.getImage());
-		}
+			if (busDTO.getBusNumber() != null) {
+				bus.setBusNumber(busDTO.getBusNumber());
+			}
+			if (busDTO.getBusType() != null) {
+				bus.setBusType(busDTO.getBusType());
+			}
+			if (busDTO.getTotalSeats() != null) {
+				bus.setTotalSeats(busDTO.getTotalSeats());
+			}
+			if (busDTO.getImage() != null) {
+				bus.setImage(busDTO.getImage());
+			}
 
-		Bus updatedBus = busRepository.save(bus);
-		return mapBusToDTO(updatedBus);
+			Bus updatedBus = busRepository.save(bus);
+			return mapBusToDTO(updatedBus);
+		} catch (Exception e) {
+			log.error("Error in updateBus with operatorId: {}, busId: {}, busDTO: {}", operatorId, busId, busDTO, e);
+			throw e;
+		}
 	}
 
 	@Override
 	@Transactional
 	public BusDTO toggleBusStatus(Long operatorId, Long busId) {
-		Bus bus = busRepository.findById(busId)
-				.filter(b -> b.getOperator().getId().equals(operatorId))
-				.orElseThrow(() -> new RuntimeException("Bus not found or access denied"));
+		log.info("toggleBusStatus called with operatorId: {}, busId: {}", operatorId, busId);
+		try {
+			Bus bus = busRepository.findById(busId)
+					.filter(b -> b.getOperator().getId().equals(operatorId))
+					.orElseThrow(() -> new RuntimeException("Bus not found or access denied"));
 
-		bus.setIsActive(!bus.getIsActive());
-		Bus savedBus = busRepository.save(bus);
-		return mapBusToDTO(savedBus);
+			bus.setIsActive(!bus.getIsActive());
+			Bus savedBus = busRepository.save(bus);
+			return mapBusToDTO(savedBus);
+		} catch (Exception e) {
+			log.error("Error in toggleBusStatus with operatorId: {}, busId: {}", operatorId, busId, e);
+			throw e;
+		}
 	}
 
 	@Override
 	public List<TripDTO> getMyTrips(Long operatorId) {
-		return tripRepository.findByBusOperatorId(operatorId).stream()
-				.map(this::mapTripToDTO)
-				.collect(Collectors.toList());
+		log.info("getMyTrips called with operatorId: {}", operatorId);
+		try {
+			return tripRepository.findByBusOperatorId(operatorId).stream()
+					.map(this::mapTripToDTO)
+					.collect(Collectors.toList());
+		} catch (Exception e) {
+			log.error("Error in getMyTrips with operatorId: {}", operatorId, e);
+			throw e;
+		}
 	}
 
 	@Override
 	@Transactional
 	public TripDTO scheduleTrip(Long operatorId, TripDTO tripDTO) {
-		// 1. Fetch Bus and verify ownership
-		Bus bus = busRepository.findById(tripDTO.getBusId())
-				.filter(b -> b.getOperator().getId().equals(operatorId))
-				.orElseThrow(() -> new RuntimeException("Bus not found or access denied"));
+		log.info("scheduleTrip called with operatorId: {}, tripDTO: {}", operatorId, tripDTO);
+		try {
+			// 1. Fetch Bus and verify ownership
+			Bus bus = busRepository.findById(tripDTO.getBusId())
+					.filter(b -> b.getOperator().getId().equals(operatorId))
+					.orElseThrow(() -> new RuntimeException("Bus not found or access denied"));
 
-		// 2. Fetch Route
-		com.bluebus.booking.entity.Route route = routeRepository.findById(tripDTO.getRouteId())
-				.orElseThrow(() -> new RuntimeException("Route not found"));
+			// 2. Fetch Route
+			com.bluebus.booking.entity.Route route = routeRepository.findById(tripDTO.getRouteId())
+					.orElseThrow(() -> new RuntimeException("Route not found"));
 
-		// 3. Create Trip Entity
-		LocalDateTime arrivalDateTime = LocalDateTime.of(tripDTO.getJourneyDate(), tripDTO.getArrivalTime());
-		// If arrival time is before departure time, it's the next day
-		if (tripDTO.getArrivalTime().isBefore(tripDTO.getDepartureTime())) {
-			arrivalDateTime = arrivalDateTime.plusDays(1);
+			// 3. Create Trip Entity
+			LocalDateTime arrivalDateTime = LocalDateTime.of(tripDTO.getJourneyDate(), tripDTO.getArrivalTime());
+			// If arrival time is before departure time, it's the next day
+			if (tripDTO.getArrivalTime().isBefore(tripDTO.getDepartureTime())) {
+				arrivalDateTime = arrivalDateTime.plusDays(1);
+			}
+
+			Trip trip = Trip.builder()
+					.route(route)
+					.bus(bus)
+					.journeyDate(tripDTO.getJourneyDate())
+					.departureTime(tripDTO.getDepartureTime())
+					.arrivalTime(arrivalDateTime)
+					.price(tripDTO.getPrice())
+					.status(com.bluebus.booking.dto.enums.TripStatus.SCHEDULED)
+					.totalSeats(bus.getTotalSeats())
+					.availableSeats(bus.getTotalSeats())
+					.bookedSeats(0)
+					.build();
+
+			Trip savedTrip = tripRepository.save(trip);
+			return mapTripToDTO(savedTrip);
+		} catch (Exception e) {
+			log.error("Error in scheduleTrip with operatorId: {}, tripDTO: {}", operatorId, tripDTO, e);
+			throw e;
 		}
-
-		Trip trip = Trip.builder()
-				.route(route)
-				.bus(bus)
-				.journeyDate(tripDTO.getJourneyDate())
-				.departureTime(tripDTO.getDepartureTime())
-				.arrivalTime(arrivalDateTime)
-				.price(tripDTO.getPrice())
-				.status(com.bluebus.booking.dto.enums.TripStatus.SCHEDULED)
-				.totalSeats(bus.getTotalSeats())
-				.availableSeats(bus.getTotalSeats())
-				.bookedSeats(0)
-				.build();
-
-		Trip savedTrip = tripRepository.save(trip);
-		return mapTripToDTO(savedTrip);
 	}
 
 	@Override
 	@Transactional
 	public TripDTO updateTripStatus(Long tripId, Long operatorId, String status) {
-		Trip trip = tripRepository.findById(tripId)
-				.filter(t -> t.getBus().getOperator().getId().equals(operatorId))
-				.orElseThrow(() -> new RuntimeException("Trip not found or access denied"));
-
+		log.info("updateTripStatus called with tripId: {}, operatorId: {}, status: {}", tripId, operatorId, status);
 		try {
-			trip.setStatus(com.bluebus.booking.dto.enums.TripStatus.valueOf(status.toUpperCase()));
-		} catch (IllegalArgumentException e) {
-			throw new RuntimeException("Invalid status: " + status);
+			Trip trip = tripRepository.findById(tripId)
+					.filter(t -> t.getBus().getOperator().getId().equals(operatorId))
+					.orElseThrow(() -> new RuntimeException("Trip not found or access denied"));
+
+			try {
+				trip.setStatus(com.bluebus.booking.dto.enums.TripStatus.valueOf(status.toUpperCase()));
+			} catch (IllegalArgumentException e) {
+				throw new RuntimeException("Invalid status: " + status);
+			}
+			
+			Trip updatedTrip = tripRepository.save(trip);
+			return mapTripToDTO(updatedTrip);
+		} catch (Exception e) {
+			log.error("Error in updateTripStatus with tripId: {}, operatorId: {}, status: {}", tripId, operatorId, status, e);
+			throw e;
 		}
-		
-		Trip updatedTrip = tripRepository.save(trip);
-		return mapTripToDTO(updatedTrip);
 	}
 
 	@Override
 	public List<BookingItemDTO> getBookingsForOperator(Long operatorId) {
-		List<Trip> myTrips = tripRepository.findByBusOperatorId(operatorId);
-		return myTrips.stream()
-				.flatMap(t -> t.getBookings().stream())
-				.flatMap(b -> b.getBookingItems().stream())
-				.map(this::mapBookingItemToDTO)
-				.collect(Collectors.toList());
+		log.info("getBookingsForOperator called with operatorId: {}", operatorId);
+		try {
+			List<Trip> myTrips = tripRepository.findByBusOperatorId(operatorId);
+			return myTrips.stream()
+					.flatMap(t -> t.getBookings().stream())
+					.flatMap(b -> b.getBookingItems().stream())
+					.map(this::mapBookingItemToDTO)
+					.collect(Collectors.toList());
+		} catch (Exception e) {
+			log.error("Error in getBookingsForOperator with operatorId: {}", operatorId, e);
+			throw e;
+		}
 	}
 
 	@Override
 	public List<BookingItemDTO> getPassengerManifest(Long tripId, Long operatorId) {
-		// Security check: Ensure the trip belongs to this operator
-		Trip trip = tripRepository.findById(tripId)
-				.filter(t -> t.getBus().getOperator().getId().equals(operatorId))
-				.orElseThrow(() -> new RuntimeException("Trip not found or access denied"));
+		log.info("getPassengerManifest called with tripId: {}, operatorId: {}", tripId, operatorId);
+		try {
+			// Security check: Ensure the trip belongs to this operator
+			Trip trip = tripRepository.findById(tripId)
+					.filter(t -> t.getBus().getOperator().getId().equals(operatorId))
+					.orElseThrow(() -> new RuntimeException("Trip not found or access denied"));
 
-		return trip.getBookings().stream()
-				.flatMap(b -> b.getBookingItems().stream())
-				.map(this::mapBookingItemToDTO)
-				.collect(Collectors.toList());
+			return trip.getBookings().stream()
+					.flatMap(b -> b.getBookingItems().stream())
+					.map(this::mapBookingItemToDTO)
+					.collect(Collectors.toList());
+		} catch (Exception e) {
+			log.error("Error in getPassengerManifest with tripId: {}, operatorId: {}", tripId, operatorId, e);
+			throw e;
+		}
 	}
 
 	@Override
 	public BigDecimal getEarningsByPeriod(Long operatorId, String period) {
-		List<Trip> myTrips = tripRepository.findByBusOperatorId(operatorId);
-		LocalDateTime now = LocalDateTime.now();
-		LocalDateTime start;
+		log.info("getEarningsByPeriod called with operatorId: {}, period: {}", operatorId, period);
+		try {
+			List<Trip> myTrips = tripRepository.findByBusOperatorId(operatorId);
+			LocalDateTime now = LocalDateTime.now();
+			LocalDateTime start;
 
-		switch (period.toUpperCase()) {
-			case "DAILY": start = now.withHour(0).withMinute(0); break;
-			case "WEEKLY": start = now.minusDays(7); break;
-			case "MONTHLY": start = now.minusMonths(1); break;
-			default: start = now.minusYears(1);
+			switch (period.toUpperCase()) {
+				case "DAILY": start = now.withHour(0).withMinute(0); break;
+				case "WEEKLY": start = now.minusDays(7); break;
+				case "MONTHLY": start = now.minusMonths(1); break;
+				default: start = now.minusYears(1);
+			}
+
+			return myTrips.stream()
+					.flatMap(t -> t.getBookings().stream())
+					.filter(b -> b.getBookingTime().isAfter(start))
+					.map(Booking::getTotalAmount)
+					.reduce(BigDecimal.ZERO, BigDecimal::add);
+		} catch (Exception e) {
+			log.error("Error in getEarningsByPeriod with operatorId: {}, period: {}", operatorId, period, e);
+			throw e;
 		}
-
-		return myTrips.stream()
-				.flatMap(t -> t.getBookings().stream())
-				.filter(b -> b.getBookingTime().isAfter(start))
-				.map(Booking::getTotalAmount)
-				.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
 	// --- Helper Methods ---

@@ -17,7 +17,10 @@ import com.bluebus.booking.service.AuthService;
 import com.bluebus.booking.service.EmailService;
 import com.bluebus.booking.service.TokenBlacklistService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
 	@Autowired
@@ -40,109 +43,145 @@ public class AuthServiceImpl implements AuthService {
 
 	@Override
 	public String login(String email, String password) {
+		log.info("login called for email: {}", email);
+		try {
+			User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Invalid email"));
 
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Invalid email"));
+			if (!passwordEncoder.matches(password, user.getPassword())) {
+				throw new RuntimeException("Invalid password");
+			}
 
-		if (!passwordEncoder.matches(password, user.getPassword())) {
-			throw new RuntimeException("Invalid password");
+			if (!user.getIsVerified()) {
+				throw new RuntimeException("Please verify your email before login");
+			}
+
+			return jwtUtil.generateToken(email);
+		} catch (Exception e) {
+			log.error("Error in login for email: {}", email, e);
+			throw e;
 		}
-
-		if (!user.getIsVerified()) {
-			throw new RuntimeException("Please verify your email before login");
-		}
-
-		return jwtUtil.generateToken(email);
 	}
 
 	@Override
 	public boolean changePassword(String email, String oldPassword, String newPassword) {
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+		log.info("changePassword called for email: {}", email);
+		try {
+			User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
-		// old password check
-		if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-			throw new RuntimeException("Old password is incorrect");
+			// old password check
+			if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+				throw new RuntimeException("Old password is incorrect");
+			}
+
+			// save new hashed password
+			user.setPassword(passwordEncoder.encode(newPassword));
+
+			userRepository.save(user);
+
+			return true;
+		} catch (Exception e) {
+			log.error("Error in changePassword for email: {}", email, e);
+			throw e;
 		}
-
-		// save new hashed password
-		user.setPassword(passwordEncoder.encode(newPassword));
-
-		userRepository.save(user);
-
-		return true;
 	}
 
 	@Override
 	public User registerUser(User user) {
-		// prevent duplicate email
-		if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-			throw new RuntimeException("Email already exists");
+		log.info("registerUser called for email: {}", user != null ? user.getEmail() : "null");
+		try {
+			// prevent duplicate email
+			if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+				throw new RuntimeException("Email already exists");
+			}
+
+			//  Hash password before save
+			user.setPassword(passwordEncoder.encode(user.getPassword()));
+			user.setIsVerified(false); // add this
+			user.setIsActive(true); // optional good practice
+
+			User savedUser = userRepository.save(user);
+
+			// Generate verification token
+			String token = UUID.randomUUID().toString();
+
+			EmailVerificationToken verificationToken = EmailVerificationToken.builder().token(token).user(savedUser)
+					.expiryDate(LocalDateTime.now().plusHours(24)).used(false).build();
+
+			emailVerificationTokenRepository.save(verificationToken);
+
+			// Send verification email
+			emailService.sendVerificationEmail(savedUser.getEmail(), token);
+
+			emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getName());
+
+			return savedUser;
+		} catch (Exception e) {
+			log.error("Error in registerUser for email: {}", user != null ? user.getEmail() : "null", e);
+			throw e;
 		}
-
-		// ✅ Hash password before save
-		user.setPassword(passwordEncoder.encode(user.getPassword()));
-		user.setIsVerified(false); // ✅ add this
-		user.setIsActive(true); // optional good practice
-
-		User savedUser = userRepository.save(user);
-
-		// Generate verification token
-		String token = UUID.randomUUID().toString();
-
-		EmailVerificationToken verificationToken = EmailVerificationToken.builder().token(token).user(savedUser)
-				.expiryDate(LocalDateTime.now().plusHours(24)).used(false).build();
-
-		emailVerificationTokenRepository.save(verificationToken);
-
-		// Send verification email
-		emailService.sendVerificationEmail(savedUser.getEmail(), token);
-
-		emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getName());
-
-		return savedUser;
 	}
 
 	@Override
 	public User getUserByEmail(String email) {
-		return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+		log.info("getUserByEmail called with email: {}", email);
+		try {
+			return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+		} catch (Exception e) {
+			log.error("Error in getUserByEmail with email: {}", email, e);
+			throw e;
+		}
 	}
 
 	@Override
 	public User getByEmail(String email) {
-		return getUserByEmail(email);
+		log.info("getByEmail called with email: {}", email);
+		try {
+			return getUserByEmail(email);
+		} catch (Exception e) {
+			log.error("Error in getByEmail with email: {}", email, e);
+			throw e;
+		}
 	}
 
 	@Override
 	public void logout(String token) {
-		tokenBlacklistService.blacklistToken(token);
+		log.info("logout called");
+		try {
+			tokenBlacklistService.blacklistToken(token);
+		} catch (Exception e) {
+			log.error("Error in logout", e);
+			throw e;
+		}
 	}
 
 	@Override
 	@Transactional
 	public void resendVerificationEmail(String email) {
-		User user = userRepository.findByEmail(email)
-				.orElseThrow(() -> new RuntimeException("User not found"));
+		log.info("resendVerificationEmail called for email: {}", email);
+		try {
+			User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
-		if (user.getIsVerified()) {
-			throw new RuntimeException("Email is already verified");
+			if (user.getIsVerified()) {
+				throw new RuntimeException("Email is already verified");
+			}
+
+			// Delete old unused tokens to avoid duplicate key error
+			emailVerificationTokenRepository.deleteByUser(user);
+			emailVerificationTokenRepository.flush();
+
+			String token = UUID.randomUUID().toString();
+
+			EmailVerificationToken verificationToken = EmailVerificationToken.builder().token(token).user(user)
+					.expiryDate(LocalDateTime.now().plusHours(24)).used(false).build();
+
+			emailVerificationTokenRepository.saveAndFlush(verificationToken);
+
+			// Send verification email
+			emailService.sendVerificationEmail(user.getEmail(), token);
+		} catch (Exception e) {
+			log.error("Error in resendVerificationEmail for email: {}", email, e);
+			throw e;
 		}
-
-		// Delete old unused tokens to avoid duplicate key error
-		emailVerificationTokenRepository.deleteByUser(user);
-		emailVerificationTokenRepository.flush();
-		
-		String token = UUID.randomUUID().toString();
-
-		EmailVerificationToken verificationToken = EmailVerificationToken.builder()
-				.token(token)
-				.user(user)
-				.expiryDate(LocalDateTime.now().plusHours(24))
-				.used(false)
-				.build();
-
-		emailVerificationTokenRepository.saveAndFlush(verificationToken);
-
-		// Send verification email
-		emailService.sendVerificationEmail(user.getEmail(), token);
 	}
 
 }

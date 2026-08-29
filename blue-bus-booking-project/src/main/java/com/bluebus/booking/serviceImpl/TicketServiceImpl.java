@@ -23,7 +23,10 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.draw.LineSeparator;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class TicketServiceImpl implements TicketService {
 
 	@Autowired
@@ -37,7 +40,7 @@ public class TicketServiceImpl implements TicketService {
 
 	@Override
 	public byte[] generateTicket(Long bookingId) {
-
+		log.info("generateTicket called with bookingId: {}", bookingId);
 		try {
 			Booking booking = bookingRepository.findById(bookingId)
 					.orElseThrow(() -> new RuntimeException("Booking not found"));
@@ -173,6 +176,7 @@ public class TicketServiceImpl implements TicketService {
 			return outputStream.toByteArray();
 
 		} catch (Exception e) {
+			log.error("Error in generateTicket with bookingId: {}", bookingId, e);
 			throw new RuntimeException("Failed to generate ticket: " + e.getMessage());
 		}
 	}

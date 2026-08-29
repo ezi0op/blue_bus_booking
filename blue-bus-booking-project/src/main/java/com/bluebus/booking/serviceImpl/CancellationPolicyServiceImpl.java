@@ -11,7 +11,10 @@ import com.bluebus.booking.entity.Booking;
 import com.bluebus.booking.repository.BookingRepository;
 import com.bluebus.booking.service.CancellationPolicyService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class CancellationPolicyServiceImpl implements CancellationPolicyService {
 
 	@Autowired
@@ -19,45 +22,50 @@ public class CancellationPolicyServiceImpl implements CancellationPolicyService 
 
 	@Override
 	public BigDecimal calculateRefundAmount(Long bookingId) {
+		log.info("calculateRefundAmount called with bookingId: {}", bookingId);
+		try {
+			Booking booking = bookingRepository.findById(bookingId)
+					.orElseThrow(() -> new RuntimeException("Booking not found"));
 
-		Booking booking = bookingRepository.findById(bookingId)
-				.orElseThrow(() -> new RuntimeException("Booking not found"));
+			/*
+			 * Calculate time difference between now and journey departure
+			 */
 
-		/*
-		 * Calculate time difference between now and journey departure
-		 */
+			LocalDateTime now = LocalDateTime.now();
 
-		LocalDateTime now = LocalDateTime.now();
+			LocalDateTime journeyDateTime = LocalDateTime.of(booking.getTrip().getJourneyDate(),
+					booking.getTrip().getDepartureTime());
 
-		LocalDateTime journeyDateTime = LocalDateTime.of(booking.getTrip().getJourneyDate(),
-				booking.getTrip().getDepartureTime());
+			long hoursBeforeJourney = Duration.between(now, journeyDateTime).toHours();
 
-		long hoursBeforeJourney = Duration.between(now, journeyDateTime).toHours();
+			BigDecimal finalAmount = booking.getFinalAmount();
 
-		BigDecimal finalAmount = booking.getFinalAmount();
+			/*
+			 * Cancellation Policy Rules
+			 *
+			 * >= 24 hrs → 100% refund 
+			 * >= 12 hrs → 70% refund 
+			 * >= 4 hrs  → 40% refund
+			 * < 4 hrs   → No refund
+			 */
 
-		/*
-		 * Cancellation Policy Rules
-		 *
-		 * >= 24 hrs → 100% refund 
-		 * >= 12 hrs → 70% refund 
-		 * >= 4 hrs  → 40% refund
-		 * < 4 hrs   → No refund
-		 */
+			if (hoursBeforeJourney >= 24) {
+				return finalAmount;
+			}
 
-		if (hoursBeforeJourney >= 24) {
-			return finalAmount;
+			if (hoursBeforeJourney >= 12) {
+				return finalAmount.multiply(BigDecimal.valueOf(0.70));
+			}
+
+			if (hoursBeforeJourney >= 4) {
+				return finalAmount.multiply(BigDecimal.valueOf(0.40));
+			}
+
+			return BigDecimal.ZERO;
+		} catch (Exception e) {
+			log.error("Error in calculateRefundAmount with bookingId: {}", bookingId, e);
+			throw e;
 		}
-
-		if (hoursBeforeJourney >= 12) {
-			return finalAmount.multiply(BigDecimal.valueOf(0.70));
-		}
-
-		if (hoursBeforeJourney >= 4) {
-			return finalAmount.multiply(BigDecimal.valueOf(0.40));
-		}
-
-		return BigDecimal.ZERO;
 
 	}
 

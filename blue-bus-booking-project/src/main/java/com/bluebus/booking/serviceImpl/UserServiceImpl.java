@@ -12,7 +12,10 @@ import com.bluebus.booking.entity.User;
 import com.bluebus.booking.repository.UserRepository;
 import com.bluebus.booking.service.UserService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class UserServiceImpl implements UserService {
 
 
@@ -21,72 +24,114 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public User getUserById(Long userId) {
-		return userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+		log.info("getUserById called with userId: {}", userId);
+		try {
+			return userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+		} catch (Exception e) {
+			log.error("Error in getUserById with userId: {}", userId, e);
+			throw e;
+		}
 	}
 
 	@Transactional
 	@Override
 	public User updateUser(Long userId, User updatedUser) {
-		User existing = getUserById(userId);
+		log.info("updateUser called with userId: {}, updatedUser: {}", userId, updatedUser);
+		try {
+			User existing = getUserById(userId);
 
-		if (updatedUser.getName() != null) {
-			existing.setName(updatedUser.getName());
+			if (updatedUser.getName() != null) {
+				existing.setName(updatedUser.getName());
+			}
+
+			if (updatedUser.getPhone() != null) {
+				existing.setPhone(updatedUser.getPhone());
+			}
+
+			if (updatedUser.getImage() != null) {
+				existing.setImage(updatedUser.getImage());
+			}
+
+			return userRepository.save(existing);
+		} catch (Exception e) {
+			log.error("Error in updateUser with userId: {}, updatedUser: {}", userId, updatedUser, e);
+			throw e;
 		}
-
-		if (updatedUser.getPhone() != null) {
-			existing.setPhone(updatedUser.getPhone());
-		}
-
-		if (updatedUser.getImage() != null) {
-			existing.setImage(updatedUser.getImage());
-		}
-
-		return userRepository.save(existing);
 	}
 
 	@Override
 	public List<User> getAllUsers() {
-		return userRepository.findAll();
+		log.info("getAllUsers called");
+		try {
+			return userRepository.findAll();
+		} catch (Exception e) {
+			log.error("Error in getAllUsers", e);
+			throw e;
+		}
 	}
 
 	@Transactional
 	@Override
 	public User updateUserStatus(Long userId, boolean active) {
-		User user = getUserById(userId);
+		log.info("updateUserStatus called with userId: {}, active: {}", userId, active);
+		try {
+			User user = getUserById(userId);
 
-		user.setIsActive(active);
+			user.setIsActive(active);
 
-		return userRepository.save(user);
+			return userRepository.save(user);
+		} catch (Exception e) {
+			log.error("Error in updateUserStatus with userId: {}, active: {}", userId, active, e);
+			throw e;
+		}
 
 	}
 
 	@Transactional
 	@Override
 	public User updateUserRoles(Long userId, Set<Role> roles) {
-		User user = getUserById(userId);
-		user.getRoles().clear();
-		if (roles != null) {
-			user.getRoles().addAll(roles);
+		log.info("updateUserRoles called with userId: {}, roles: {}", userId, roles);
+		try {
+			User user = getUserById(userId);
+			user.getRoles().clear();
+			if (roles != null) {
+				user.getRoles().addAll(roles);
+			}
+			return userRepository.save(user);
+		} catch (Exception e) {
+			log.error("Error in updateUserRoles with userId: {}, roles: {}", userId, roles, e);
+			throw e;
 		}
-		return userRepository.save(user);
 	}
 
 	@Override
 	public boolean deleteUser(Long id) {
-		User user = userRepository.findById(id).orElse(null);
+		log.info("deleteUser called with id: {}", id);
+		try {
+			User user = userRepository.findById(id).orElse(null);
 
-		if (user == null)
-			return false;
+			if (user == null)
+				return false;
 
-		user.setIsActive(false); //✅ SOFT DELETE 
-		userRepository.save(user);
+			user.setIsActive(false); //✅ SOFT DELETE 
+			userRepository.save(user);
 
-		return true;
+			return true;
+		} catch (Exception e) {
+			log.error("Error in deleteUser with id: {}", id, e);
+			throw e;
+		}
 	}
 
 	@Override
 	public long getUserCount() {
-		return userRepository.count();
+		log.info("getUserCount called");
+		try {
+			return userRepository.count();
+		} catch (Exception e) {
+			log.error("Error in getUserCount", e);
+			throw e;
+		}
 	}
 
 }

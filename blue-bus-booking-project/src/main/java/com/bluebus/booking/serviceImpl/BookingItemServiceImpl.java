@@ -10,7 +10,10 @@ import com.bluebus.booking.entity.BookingItem;
 import com.bluebus.booking.repository.BookingItemRepository;
 import com.bluebus.booking.service.BookingItemService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class BookingItemServiceImpl implements BookingItemService {
 
 	@Autowired
@@ -19,25 +22,39 @@ public class BookingItemServiceImpl implements BookingItemService {
 	
 	@Override
 	public List<BookingItem> getItemsByBooking(Long bookingId) {
-
-		return bookingItemRepository.findByBookingId(bookingId);
+		log.info("getItemsByBooking called with bookingId: {}", bookingId);
+		try {
+			return bookingItemRepository.findByBookingId(bookingId);
+		} catch (Exception e) {
+			log.error("Error in getItemsByBooking with bookingId: {}", bookingId, e);
+			throw e;
+		}
 	}
 
 	@Override
 	public BookingItem addBookingItem(BookingItem item) {
-
-		return bookingItemRepository.save(item);
+		log.info("addBookingItem called with item: {}", item);
+		try {
+			return bookingItemRepository.save(item);
+		} catch (Exception e) {
+			log.error("Error in addBookingItem with item: {}", item, e);
+			throw e;
+		}
 	}
 
 	@Transactional
 	@Override
 	public int deleteBookingItem(Long id) {
-		if (!bookingItemRepository.existsById(id)) {
-			throw new RuntimeException("BookingItem not found");
+		log.info("deleteBookingItem called with id: {}", id);
+		try {
+			if (!bookingItemRepository.existsById(id)) {
+				throw new RuntimeException("BookingItem not found");
+			}
+			return bookingItemRepository.deleteByIdCustom(id);
+		} catch (Exception e) {
+			log.error("Error in deleteBookingItem with id: {}", id, e);
+			throw e;
 		}
-
-		return bookingItemRepository.deleteByIdCustom(id);
-
 	}
 
 }
